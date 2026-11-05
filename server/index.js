@@ -9,11 +9,23 @@ const app = express();
 
 app.use(
   cors({
-    origin: [
-      "https://itchgramm.vercel.app",
-      "https://itchgramm-8883651dp-roman-lening.vercel.app",
-      "http://localhost:5173",
-    ],
+    origin: (origin, callback) => {
+      const allowedOrigins = [
+        "https://itchgramm.vercel.app",
+        "http://localhost:5173",
+      ];
+
+      const isVercelDeployment =
+        /^https:\/\/itchgramm-[a-z0-9-]+-roman-lening\.vercel\.app$/.test(
+          origin || ""
+        );
+
+      if (!origin || allowedOrigins.includes(origin) || isVercelDeployment) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
   })
 );
 
