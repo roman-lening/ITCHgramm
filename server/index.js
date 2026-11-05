@@ -6,14 +6,17 @@ dotenv.config();
 const port = process.env.PORT || process.env.LOCAL_PORT || 3333;
 const host = "0.0.0.0";
 const app = express();
+
 app.use(
   cors({
     origin: [
       "https://itchgramm.vercel.app",
+      "https://itchgramm-8883651dp-roman-lening.vercel.app",
       "http://localhost:5173",
     ],
   })
 );
+
 app.use(express.json());
 app.get("/", (req, res) => {
   res.send("Сервер работает!");
