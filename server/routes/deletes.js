@@ -2,6 +2,7 @@ import express from "express";
 import bcrypt from "bcrypt";
 import User from "../modules/User.js";
 import Post from "../modules/Post.js";
+import Like from "../modules/Like.js";
 import mongoose from "mongoose";
 import authMiddleware from "../middleware/authMiddleware.js";
 
@@ -61,6 +62,16 @@ router.delete("/profile", authMiddleware, async (req, res) => {
       });
     }
     await mongoose.connection.transaction(async (session) => {
+      const posts = await Post.find({ author: user._id })
+        .select("_id")
+        .session(session);
+      const postIds = posts.map((post) => post._id);
+      await Like.deleteMany(
+        {
+          $or: [{ author: user._id }, { post: { $in: postIds } }],
+        },
+        { session },
+      );
       await Post.deleteMany({ author: user._id }, { session });
       await User.updateMany(
         { followers: user._id },
@@ -85,7 +96,6 @@ router.delete("/profile", authMiddleware, async (req, res) => {
   }
 });
 
-
 router.delete("/posts/:id", authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
@@ -94,18 +104,27 @@ router.delete("/posts/:id", authMiddleware, async (req, res) => {
         message: "Invalid post ID",
       });
     }
-    const post = await Post.findOneAndDelete({
-      _id: id,
-      author: req.userId,
+    let deletedPost;
+    await mongoose.connection.transaction(async (session) => {
+      deletedPost = await Post.findOneAndDelete(
+        {
+          _id: id,
+          author: req.userId,
+        },
+        { session },
+      );
+      if (!deletedPost) {
+        return;
+      }
+      await Like.deleteMany({ post: id }, { session });
     });
-    if (!post) {
+    if (!deletedPost) {
       return res.status(404).json({
         message: "Post not found",
       });
     }
     return res.status(200).json({
       message: "Post successfully deleted",
-      post,
     });
   } catch (error) {
     console.error(error);
@@ -115,5 +134,38 @@ router.delete("/posts/:id", authMiddleware, async (req, res) => {
   }
 });
 
+router.delete("/posts/:id/like", authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!mongoose.isObjectIdOrHexString(id)) {
+      return res.status(400).json({
+        message: "Invalid post ID",
+      });
+    }
+    const post = await Post.findById(id);
+    if (!post) {
+      return res.status(404).json({
+        message: "Post not found",
+      });
+    }
+    const like = await Like.findOneAndDelete({
+      post: id,
+      author: req.userId,
+    });
+    if (!like) {
+      return res.status(404).json({
+        message: "Like not found",
+      });
+    }
+    return res.status(200).json({
+      message: "Like successfully removed",
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+});
 
 export default router;

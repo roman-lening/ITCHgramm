@@ -2,6 +2,8 @@ import express from "express";
 import User from "../modules/User.js";
 import Post from "../modules/Post.js";
 import authMiddleware from "../middleware/authMiddleware.js";
+import mongoose from "mongoose";
+import Like from "../modules/Like.js";
 
 const router = express.Router();
 
@@ -70,6 +72,149 @@ router.get("/profile/:username", async (req, res) => {
       },
       posts,
     });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+});
+
+
+router.get("/posts/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!mongoose.isObjectIdOrHexString(id)) {
+      return res.status(400).json({
+        message: "Invalid post ID",
+      });
+    }
+    const post = await Post.findById(id).populate(
+      "author",
+      "username fullname avatarUrl"
+    );
+    if (!post) {
+      return res.status(404).json({
+        message: "Post not found",
+      });
+    }
+    const likesCount = await Like.countDocuments({
+      post: id,
+    });
+    return res.status(200).json({
+      post: {
+        ...post.toObject(),
+        likesCount,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+});
+
+
+router.get("/followers/:id", async (req, res) => {
+  try {
+    const { id } = req.params ?? {};
+    if (!mongoose.isObjectIdOrHexString(id)) {
+      return res.status(400).json({
+        message: "Invalid post UserID",
+      });
+    }
+    const user = await User.findById(id).populate(
+      "followers",
+      "username avatarUrl",
+    );
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+    return res.status(200).json(user.followers);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+});
+
+router.get("/following/:id", async (req, res) => {
+  try {
+    const { id } = req.params ?? {};
+    if (!mongoose.isObjectIdOrHexString(id)) {
+      return res.status(400).json({
+        message: "Invalid post UserID",
+      });
+    }
+    const user = await User.findById(id).populate(
+      "following",
+      "username avatarUrl",
+    );
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+    return res.status(200).json(user.following);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+});
+
+router.get("/posts", async (req, res) => {
+  try {
+    const posts = await Post.find()
+      .populate("author", "username avatarUrl")
+      .sort({ createdAt: -1 });
+    const postsWithLikes = await Promise.all(
+      posts.map(async (post) => {
+        const likesCount = await Like.countDocuments({
+          post: post._id,
+        });
+        return {
+          ...post.toObject(),
+          likesCount,
+        };
+      }),
+    );
+    return res.status(200).json(postsWithLikes);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+});
+
+router.get("/posts/:id/likes", async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!mongoose.isObjectIdOrHexString(id)) {
+      return res.status(400).json({
+        message: "Invalid post ID",
+      });
+    }
+    const post = await Post.findById(id);
+    if (!post) {
+      return res.status(404).json({
+        message: "Post not found",
+      });
+    }
+    const likes = await Like.find({ post: id }).populate(
+      "author",
+      "username avatarUrl fullname",
+    );
+    const users = likes
+      .filter((like) => like.author)
+      .map((like) => like.author);
+    return res.status(200).json(users);
   } catch (error) {
     console.error(error);
     return res.status(500).json({

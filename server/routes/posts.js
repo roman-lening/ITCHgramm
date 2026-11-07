@@ -2,6 +2,8 @@ import express from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import User from "../modules/User.js";
+import mongoose from "mongoose";
+import Like from "../modules/Like.js";
 import authMiddleware from "../middleware/authMiddleware.js";
 import Post from "../modules/Post.js";
 
@@ -188,6 +190,52 @@ router.post("/profile/newpost", authMiddleware, async (req, res) => {
     if (error.name === "ValidationError") {
       return res.status(400).json({
         message: "Invalid post data",
+      });
+    }
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+});
+
+router.post("/posts/:id/like", authMiddleware, async (req, res) => {
+  try {
+    const userExists = await User.exists({ _id: req.userId });
+    if (!userExists) {
+      return res.status(401).json({
+        message: "User no longer exists",
+      });
+    }
+    const { id } = req.params;
+    if (!mongoose.isObjectIdOrHexString(id)) {
+      return res.status(400).json({
+        message: "Invalid post ID",
+      });
+    }
+    const post = await Post.findById(id);
+    if (!post) {
+      return res.status(404).json({
+        message: "Post not found",
+      });
+    }
+    const like = await Like.create({
+      post: id,
+      author: req.userId,
+    });
+    return res.status(201).json({
+      message: "Post successfully liked",
+      like,
+    });
+  } catch (error) {
+    console.error(error);
+    if (error.code === 11000) {
+      return res.status(409).json({
+        message: "Post already liked",
+      });
+    }
+    if (error.name === "ValidationError") {
+      return res.status(400).json({
+        message: "Invalid like data",
       });
     }
     return res.status(500).json({
