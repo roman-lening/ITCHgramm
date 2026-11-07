@@ -1,0 +1,199 @@
+import express from "express";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import User from "../modules/User.js";
+import authMiddleware from "../middleware/authMiddleware.js";
+import Post from "../modules/Post.js";
+
+const router = express.Router();
+
+router.post("/register", async (req, res) => {
+  try {
+    const { username, password, email, fullname } = req.body ?? {};
+    if (
+      [username, password, email, fullname].some(
+        (value) => typeof value !== "string" || !value.trim(),
+      )
+    ) {
+      return res.status(400).json({
+        message: "All fields must be non-empty strings",
+      });
+    }
+    const normalizedUsername = username.trim().toLowerCase();
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedFullname = fullname.trim();
+    if (normalizedUsername.length < 3 || normalizedUsername.length > 30) {
+      return res.status(400).json({
+        message: "Username must contain 3-30 characters",
+      });
+    }
+    if (password.length < 8 || Buffer.byteLength(password, "utf8") > 72) {
+      return res.status(400).json({
+        message:
+          "Password must contain at least 8 characters and fit bcrypt's 72-byte limit",
+      });
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      return res.status(400).json({
+        message: "Invalid email format",
+      });
+    }
+    const existingUser = await User.findOne({
+      $or: [{ username: normalizedUsername }, { email: normalizedEmail }],
+    });
+    if (existingUser) {
+      return res.status(409).json({
+        message: "Username or email already exists",
+      });
+    }
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = await User.create({
+      username: normalizedUsername,
+      password: hashedPassword,
+      email: normalizedEmail,
+      fullname: normalizedFullname,
+    });
+    return res.status(201).json({
+      message: "User successfully registered",
+      userId: newUser._id,
+    });
+  } catch (error) {
+    if (error.code === 11000) {
+      return res.status(409).json({
+        message: "Username or email already exists",
+      });
+    }
+    console.error(error);
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+});
+
+router.post("/login", async (req, res) => {
+  try {
+    const { username, password, email } = req.body ?? {};
+    if (
+      typeof password !== "string" ||
+      !password ||
+      (typeof username !== "string" && typeof email !== "string")
+    ) {
+      return res.status(400).json({
+        message: "Valid username/email and password are required",
+      });
+    }
+    const login = (typeof email === "string" && email.trim() ? email : username)
+      ?.trim()
+      .toLowerCase();
+    if (!login) {
+      return res.status(400).json({
+        message: "Username or email is required",
+      });
+    }
+    const user = await User.findOne({
+      $or: [{ username: login }, { email: login }],
+    }).select("+password");
+    if (!user) {
+      return res.status(401).json({
+        message: "Invalid credentials",
+      });
+    }
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        message: "Invalid credentials",
+      });
+    }
+    const token = jwt.sign(
+      { userId: user._id.toString() },
+      process.env.JWT_SECRET,
+      { algorithm: "HS256", expiresIn: "1h" },
+    );
+    return res.status(200).json({
+      message: "Login successful",
+      userId: user._id,
+      token,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+});
+
+router.post("/users/:username/follow", authMiddleware, async (req, res) => {
+  try {
+    const { username } = req.params;
+    const targetUser = await User.findOne({
+      username: username.toLowerCase(),
+    });
+    if (!targetUser) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+    if (targetUser._id.equals(req.userId)) {
+      return res.status(400).json({
+        message: "You cannot follow yourself",
+      });
+    }
+    await User.findByIdAndUpdate(req.userId, {
+      $addToSet: { following: targetUser._id },
+    });
+    await User.findByIdAndUpdate(targetUser._id, {
+      $addToSet: { followers: req.userId },
+    });
+    return res.status(200).json({
+      message: "Successfully followed user",
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+});
+
+router.post("/profile/newpost", authMiddleware, async (req, res) => {
+  try {
+    const { image, description } = req.body ?? {};
+    if (
+      typeof image !== "string" ||
+      typeof description !== "string" ||
+      !image.trim() ||
+      !description.trim()
+    ) {
+      return res.status(400).json({
+        message: "Image and description are required",
+      });
+    }
+    const user = await User.findById(req.userId);
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+    const post = await Post.create({
+      image: image.trim(),
+      description: description.trim(),
+      author: req.userId,
+    });
+    return res.status(201).json({
+      message: "Post created successfully",
+      post,
+    });
+  } catch (error) {
+    console.error(error);
+    if (error.name === "ValidationError") {
+      return res.status(400).json({
+        message: "Invalid post data",
+      });
+    }
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+});
+
+export default router;

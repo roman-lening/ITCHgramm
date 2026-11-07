@@ -1,15 +1,3 @@
-// import "./App.css";
-
-// function App() {
-//   return (
-//     <div>
-//       <p>Клиент работает</p>
-//     </div>
-//   );
-// }
-
-// export default App;
-
 import { useEffect, useState } from "react";
 
 function App() {
