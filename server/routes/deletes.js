@@ -121,40 +121,56 @@ router.delete("/profile", authMiddleware, async (req, res) => {
         message: "Invalid password",
       });
     }
-    let mediaToDelete = [];
-    await mongoose.connection.transaction(async (session) => {
-      const posts = await Post.find({ author: user._id })
-        .select("_id imagePublicId videoPublicId")
-        .session(session);
-      mediaToDelete = [
-        { publicId: user.avatarPublicId, resourceType: "image" },
-        ...posts.flatMap(postMedia),
-      ];
-      const postIds = posts.map((post) => post._id);
-      await Like.deleteMany(
-        {
-          $or: [{ author: user._id }, { post: { $in: postIds } }],
-        },
-        { session },
-      );
-      await Post.deleteMany({ author: user._id }, { session });
-      await User.updateMany(
-        { followers: user._id },
-        { $pull: { followers: user._id } },
-        { session },
-      );
-      await User.updateMany(
-        { following: user._id },
-        { $pull: { following: user._id } },
-        { session },
-      );
-      await User.findByIdAndDelete(user._id, { session });
-    });
+    const mediaToDelete = await mongoose.connection.transaction(
+      async (session) => {
+        const posts = await Post.find({ author: user._id })
+          .select("_id imagePublicId videoPublicId")
+          .session(session);
+        const media = [
+          { publicId: user.avatarPublicId, resourceType: "image" },
+          ...posts.flatMap(postMedia),
+        ];
+        const postIds = posts.map((post) => post._id);
+        await Like.deleteMany(
+          {
+            $or: [
+              { author: user._id },
+              { post: { $in: postIds } },
+            ],
+          },
+          { session },
+        );
+        await Post.deleteMany({ author: user._id }, { session });
+        await User.updateMany(
+          { followers: user._id },
+          { $pull: { followers: user._id } },
+          { session },
+        );
+        await User.updateMany(
+          { following: user._id },
+          { $pull: { following: user._id } },
+          { session },
+        );
+        const deletedUser = await User.findByIdAndDelete(
+          user._id,
+          { session },
+        );
+        if (!deletedUser) {
+          throw new Error("USER_NOT_FOUND");
+        }
+        return media;
+      },
+    );
     await removeMedia(mediaToDelete);
     return res.status(200).json({
       message: "Account permanently deleted",
     });
   } catch (error) {
+    if (error.message === "USER_NOT_FOUND") {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
     console.error(error);
     return res.status(500).json({
       message: "Internal server error",

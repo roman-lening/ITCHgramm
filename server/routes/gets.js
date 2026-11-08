@@ -255,4 +255,23 @@ router.get("/users/search", async (req, res) => {
   }
 });
 
+router.get("/test-email", async (req, res) => {
+  try {
+    const info = await sendEmail(
+      process.env.TEST_EMAIL,
+      "ITCHgramm — SMTP Test",
+      "<h2>SMTP works!</h2><p>Email successfully sent from Railway.</p>",
+    );
+    return res.status(200).json({
+      message: "Email sent successfully",
+      messageId: info.messageId,
+    });
+  } catch (error) {
+    console.error("SMTP test failed:", error);
+    return res.status(500).json({
+      message: "Email sending failed",
+    });
+  }
+});
+
 export default router;

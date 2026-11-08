@@ -12,6 +12,12 @@ import {
   uploadToCloudinary,
   deleteFromCloudinary,
 } from "../utils/cloudinaryMedia.js";
+import { sendEmail, sendWelcomeEmail } from "../utils/sendEmail.js";
+import crypto from "node:crypto";
+import {
+  forgotPasswordLimiter,
+  resetPasswordLimiter,
+} from "../middleware/rateLimit.js";
 
 const IMAGE_LIMIT = 2 * 1024 * 1024;
 
@@ -73,6 +79,12 @@ router.post("/register", async (req, res) => {
         message: "Username must contain 3-30 characters",
       });
     }
+    if (!/^[a-z0-9_.]+$/.test(normalizedUsername)) {
+      return res.status(400).json({
+        message:
+          "Username can contain only letters, numbers, underscores and dots",
+      });
+    }
     if (password.length < 8 || Buffer.byteLength(password, "utf8") > 72) {
       return res.status(400).json({
         message:
@@ -99,6 +111,12 @@ router.post("/register", async (req, res) => {
       email: normalizedEmail,
       fullname: normalizedFullname,
     });
+
+    try {
+      await sendWelcomeEmail(newUser.email, newUser.username);
+    } catch (mailError) {
+      console.error("Welcome email failed:", mailError);
+    }
     return res.status(201).json({
       message: "User successfully registered",
       userId: newUser._id,
@@ -107,6 +125,11 @@ router.post("/register", async (req, res) => {
     if (error.code === 11000) {
       return res.status(409).json({
         message: "Username or email already exists",
+      });
+    }
+    if (error.name === "ValidationError") {
+      return res.status(400).json({
+        message: "Invalid registration data",
       });
     }
     console.error(error);
@@ -227,7 +250,6 @@ router.post("/users/:username/follow", authMiddleware, async (req, res) => {
   }
 });
 
-
 router.post(
   "/profile/newpost",
   authMiddleware,
@@ -335,6 +357,137 @@ router.post("/posts/:id/like", authMiddleware, async (req, res) => {
         message: "Invalid like data",
       });
     }
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+});
+
+router.post("/forgot-password", forgotPasswordLimiter, async (req, res) => {
+  try {
+    const { email } = req.body ?? {};
+    if (typeof email !== "string" || !email.trim()) {
+      return res.status(400).json({
+        message: "Valid email is required",
+      });
+    }
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = await User.findOne({
+      email: normalizedEmail,
+    }).select("+resetPasswordCode +resetPasswordExpires");
+    const successMessage = {
+      message: "If the email exists, a reset code has been sent",
+    };
+    if (!user) {
+      return res.status(200).json(successMessage);
+    }
+    const code = crypto.randomInt(100000, 1000000).toString();
+    const hashedCode = await bcrypt.hash(code, 10);
+    user.resetPasswordCode = hashedCode;
+    user.resetPasswordExpires = new Date(Date.now() + 10 * 60 * 1000);
+    await user.save();
+    try {
+      await sendEmail(
+        user.email,
+        "ITCHgramm - Password Reset",
+        `<p>Your password reset code is:</p>
+         <h2>${code}</h2>
+         <p>This code expires in 10 minutes.</p>`,
+      );
+    } catch (mailError) {
+      console.error("Password reset email failed:", mailError);
+      await User.updateOne(
+        {
+          _id: user._id,
+          resetPasswordCode: hashedCode,
+        },
+        {
+          $unset: {
+            resetPasswordCode: "",
+            resetPasswordExpires: "",
+          },
+        },
+      );
+    }
+    return res.status(200).json(successMessage);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+});
+
+router.post("/reset-password", resetPasswordLimiter, async (req, res) => {
+  try {
+    const { email, code, newPassword } = req.body ?? {};
+    if (typeof email !== "string" || !email.trim()) {
+      return res.status(400).json({
+        message: "Valid email is required",
+      });
+    }
+    if (typeof code !== "string" || !/^\d{6}$/.test(code)) {
+      return res.status(400).json({
+        message: "Valid 6-digit code is required",
+      });
+    }
+    if (
+      typeof newPassword !== "string" ||
+      newPassword.length < 8 ||
+      Buffer.byteLength(newPassword, "utf8") > 72
+    ) {
+      return res.status(400).json({
+        message:
+          "Password must contain at least 8 characters and fit bcrypt's 72-byte limit",
+      });
+    }
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = await User.findOne({
+      email: normalizedEmail,
+    }).select("+password +resetPasswordCode +resetPasswordExpires");
+    if (!user || !user.resetPasswordCode || !user.resetPasswordExpires) {
+      return res.status(400).json({
+        message: "Invalid or expired reset code",
+      });
+    }
+    if (user.resetPasswordExpires <= new Date()) {
+      return res.status(400).json({
+        message: "Invalid or expired reset code",
+      });
+    }
+    const isCodeValid = await bcrypt.compare(code, user.resetPasswordCode);
+    if (!isCodeValid) {
+      return res.status(400).json({
+        message: "Invalid or expired reset code",
+      });
+    }
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const result = await User.updateOne(
+      {
+        _id: user._id,
+        resetPasswordCode: user.resetPasswordCode,
+        resetPasswordExpires: { $gt: new Date() },
+      },
+      {
+        $set: {
+          password: hashedPassword,
+        },
+        $unset: {
+          resetPasswordCode: "",
+          resetPasswordExpires: "",
+        },
+      },
+    );
+    if (result.modifiedCount === 0) {
+      return res.status(400).json({
+        message: "Invalid or expired reset code",
+      });
+    }
+    return res.status(200).json({
+      message: "Password successfully reset",
+    });
+  } catch (error) {
+    console.error(error);
     return res.status(500).json({
       message: "Internal server error",
     });
