@@ -5,6 +5,46 @@ import Post from "../modules/Post.js";
 import Like from "../modules/Like.js";
 import mongoose from "mongoose";
 import authMiddleware from "../middleware/authMiddleware.js";
+import { uploadPost, uploadAvatar } from "../middleware/upload.js";
+import { handleUpload } from "../middleware/handleUpload.js";
+import {
+  uploadToCloudinary,
+  deleteFromCloudinary,
+} from "../utils/cloudinaryMedia.js";
+
+const IMAGE_LIMIT = 2 * 1024 * 1024;
+const validatePostFiles = (files) => {
+  const image = files?.image?.[0];
+  const video = files?.video?.[0];
+  if (image) {
+    if (!image.mimetype.startsWith("image/")) {
+      return "Invalid image format";
+    }
+    if (image.size > IMAGE_LIMIT) {
+      return "Image must not exceed 2 MB";
+    }
+  }
+  if (video && !video.mimetype.startsWith("video/")) {
+    return "Invalid video format";
+  }
+  return null;
+};
+const removeMedia = async (items) => {
+  const results = await Promise.allSettled(
+    items
+      .filter((item) => item?.publicId)
+      .map((item) => deleteFromCloudinary(item.publicId, item.resourceType)),
+  );
+  for (const result of results) {
+    if (result.status === "rejected") {
+      console.error("Cloudinary cleanup failed:", result.reason);
+    }
+  }
+};
+const postMedia = (post) => [
+  { publicId: post.imagePublicId, resourceType: "image" },
+  { publicId: post.videoPublicId, resourceType: "video" },
+];
 
 const router = express.Router();
 
@@ -24,12 +64,32 @@ router.delete("/users/:username/follow", authMiddleware, async (req, res) => {
         message: "You cannot unfollow yourself",
       });
     }
-    await User.findByIdAndUpdate(req.userId, {
-      $pull: { following: targetUser._id },
+    let userExists = false;
+    await mongoose.connection.transaction(async (session) => {
+      const currentUser = await User.findByIdAndUpdate(
+        req.userId,
+        {
+          $pull: { following: targetUser._id },
+        },
+        { session },
+      );
+      if (!currentUser) {
+        return;
+      }
+      userExists = true;
+      await User.findByIdAndUpdate(
+        targetUser._id,
+        {
+          $pull: { followers: req.userId },
+        },
+        { session },
+      );
     });
-    await User.findByIdAndUpdate(targetUser._id, {
-      $pull: { followers: req.userId },
-    });
+    if (!userExists) {
+      return res.status(404).json({
+        message: "Current user not found",
+      });
+    }
     return res.status(200).json({
       message: "Successfully unfollowed user",
     });
@@ -61,10 +121,15 @@ router.delete("/profile", authMiddleware, async (req, res) => {
         message: "Invalid password",
       });
     }
+    let mediaToDelete = [];
     await mongoose.connection.transaction(async (session) => {
       const posts = await Post.find({ author: user._id })
-        .select("_id")
+        .select("_id imagePublicId videoPublicId")
         .session(session);
+      mediaToDelete = [
+        { publicId: user.avatarPublicId, resourceType: "image" },
+        ...posts.flatMap(postMedia),
+      ];
       const postIds = posts.map((post) => post._id);
       await Like.deleteMany(
         {
@@ -85,6 +150,7 @@ router.delete("/profile", authMiddleware, async (req, res) => {
       );
       await User.findByIdAndDelete(user._id, { session });
     });
+    await removeMedia(mediaToDelete);
     return res.status(200).json({
       message: "Account permanently deleted",
     });
@@ -123,6 +189,7 @@ router.delete("/posts/:id", authMiddleware, async (req, res) => {
         message: "Post not found",
       });
     }
+    await removeMedia(postMedia(deletedPost));
     return res.status(200).json({
       message: "Post successfully deleted",
     });

@@ -6,6 +6,50 @@ import mongoose from "mongoose";
 import Like from "../modules/Like.js";
 import authMiddleware from "../middleware/authMiddleware.js";
 import Post from "../modules/Post.js";
+import { uploadPost, uploadAvatar } from "../middleware/upload.js";
+import { handleUpload } from "../middleware/handleUpload.js";
+import {
+  uploadToCloudinary,
+  deleteFromCloudinary,
+} from "../utils/cloudinaryMedia.js";
+
+const IMAGE_LIMIT = 2 * 1024 * 1024;
+
+const validatePostFiles = (files) => {
+  const image = files?.image?.[0];
+  const video = files?.video?.[0];
+  if (image) {
+    if (!image.mimetype.startsWith("image/")) {
+      return "Invalid image format";
+    }
+    if (image.size > IMAGE_LIMIT) {
+      return "Image must not exceed 2 MB";
+    }
+  }
+  if (video && !video.mimetype.startsWith("video/")) {
+    return "Invalid video format";
+  }
+  return null;
+};
+
+const removeMedia = async (items) => {
+  const results = await Promise.allSettled(
+    items
+      .filter((item) => item?.publicId)
+      .map((item) => deleteFromCloudinary(item.publicId, item.resourceType)),
+  );
+
+  for (const result of results) {
+    if (result.status === "rejected") {
+      console.error("Cloudinary cleanup failed:", result.reason);
+    }
+  }
+};
+
+const postMedia = (post) => [
+  { publicId: post.imagePublicId, resourceType: "image" },
+  { publicId: post.videoPublicId, resourceType: "video" },
+];
 
 const router = express.Router();
 
@@ -140,16 +184,42 @@ router.post("/users/:username/follow", authMiddleware, async (req, res) => {
         message: "You cannot follow yourself",
       });
     }
-    await User.findByIdAndUpdate(req.userId, {
-      $addToSet: { following: targetUser._id },
-    });
-    await User.findByIdAndUpdate(targetUser._id, {
-      $addToSet: { followers: req.userId },
+    await mongoose.connection.transaction(async (session) => {
+      const currentUser = await User.findByIdAndUpdate(
+        req.userId,
+        {
+          $addToSet: { following: targetUser._id },
+        },
+        { session },
+      );
+      if (!currentUser) {
+        throw new Error("CURRENT_USER_NOT_FOUND");
+      }
+      const updatedTarget = await User.findByIdAndUpdate(
+        targetUser._id,
+        {
+          $addToSet: { followers: req.userId },
+        },
+        { session },
+      );
+      if (!updatedTarget) {
+        throw new Error("TARGET_USER_NOT_FOUND");
+      }
     });
     return res.status(200).json({
       message: "Successfully followed user",
     });
   } catch (error) {
+    if (error.message === "CURRENT_USER_NOT_FOUND") {
+      return res.status(404).json({
+        message: "Current user not found",
+      });
+    }
+    if (error.message === "TARGET_USER_NOT_FOUND") {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
     console.error(error);
     return res.status(500).json({
       message: "Internal server error",
@@ -157,46 +227,73 @@ router.post("/users/:username/follow", authMiddleware, async (req, res) => {
   }
 });
 
-router.post("/profile/newpost", authMiddleware, async (req, res) => {
-  try {
-    const { image, description } = req.body ?? {};
-    if (
-      typeof image !== "string" ||
-      typeof description !== "string" ||
-      !image.trim() ||
-      !description.trim()
-    ) {
-      return res.status(400).json({
-        message: "Image and description are required",
+
+router.post(
+  "/profile/newpost",
+  authMiddleware,
+  handleUpload(uploadPost),
+  async (req, res) => {
+    const uploaded = [];
+    try {
+      const { description } = req.body ?? {};
+      const image = req.files?.image?.[0];
+      const video = req.files?.video?.[0];
+      const fileError = validatePostFiles(req.files);
+      if (fileError) {
+        return res.status(400).json({ message: fileError });
+      }
+      if (
+        typeof description !== "string" ||
+        !description.trim() ||
+        description.trim().length > 400 ||
+        (!image && !video)
+      ) {
+        return res.status(400).json({
+          message: "Valid description and image or video are required",
+        });
+      }
+      const user = await User.exists({ _id: req.userId });
+      if (!user) {
+        return res.status(404).json({
+          message: "User not found",
+        });
+      }
+      const media = {};
+      if (image) {
+        const result = await uploadToCloudinary(image, "itchgramm/posts");
+        uploaded.push(result);
+        media.image = result.url;
+        media.imagePublicId = result.publicId;
+      }
+      if (video) {
+        const result = await uploadToCloudinary(video, "itchgramm/posts");
+        uploaded.push(result);
+        media.video = result.url;
+        media.videoPublicId = result.publicId;
+      }
+      const post = await Post.create({
+        ...media,
+        description: description.trim(),
+        author: req.userId,
+      });
+      return res.status(201).json({
+        message: "Post created successfully",
+        post,
+      });
+    } catch (error) {
+      await removeMedia(uploaded);
+      console.error(error);
+      if (error.name === "ValidationError") {
+        return res.status(400).json({
+          message: "Invalid post data",
+        });
+      }
+      return res.status(500).json({
+        message: "Internal server error",
       });
     }
-    const user = await User.findById(req.userId);
-    if (!user) {
-      return res.status(404).json({
-        message: "User not found",
-      });
-    }
-    const post = await Post.create({
-      image: image.trim(),
-      description: description.trim(),
-      author: req.userId,
-    });
-    return res.status(201).json({
-      message: "Post created successfully",
-      post,
-    });
-  } catch (error) {
-    console.error(error);
-    if (error.name === "ValidationError") {
-      return res.status(400).json({
-        message: "Invalid post data",
-      });
-    }
-    return res.status(500).json({
-      message: "Internal server error",
-    });
-  }
-});
+  },
+);
 
 router.post("/posts/:id/like", authMiddleware, async (req, res) => {
   try {

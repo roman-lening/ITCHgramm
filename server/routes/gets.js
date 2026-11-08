@@ -80,7 +80,6 @@ router.get("/profile/:username", async (req, res) => {
   }
 });
 
-
 router.get("/posts/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -91,7 +90,7 @@ router.get("/posts/:id", async (req, res) => {
     }
     const post = await Post.findById(id).populate(
       "author",
-      "username fullname avatarUrl"
+      "username fullname avatarUrl",
     );
     if (!post) {
       return res.status(404).json({
@@ -114,7 +113,6 @@ router.get("/posts/:id", async (req, res) => {
     });
   }
 });
-
 
 router.get("/followers/:id", async (req, res) => {
   try {
@@ -214,6 +212,40 @@ router.get("/posts/:id/likes", async (req, res) => {
     const users = likes
       .filter((like) => like.author)
       .map((like) => like.author);
+    return res.status(200).json(users);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+});
+
+router.get("/users/search", async (req, res) => {
+  try {
+    const query = req.query.q?.trim();
+    if (!query || typeof query !== "string") {
+      return res.status(400).json({
+        message: "Search query is required",
+      });
+    }
+    const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const users = await User.find({
+      $or: [
+        {
+          username: {
+            $regex: escapedQuery,
+            $options: "i",
+          },
+        },
+        {
+          fullname: {
+            $regex: escapedQuery,
+            $options: "i",
+          },
+        },
+      ],
+    }).select("username fullname avatarUrl");
     return res.status(200).json(users);
   } catch (error) {
     console.error(error);

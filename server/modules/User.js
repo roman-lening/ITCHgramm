@@ -10,6 +10,7 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
       minlength: 3,
       maxlength: 30,
+      match: [/^[a-zA-Z0-9_.]+$/],
     },
     avatarUrl: {
       type: String,
@@ -43,6 +44,9 @@ const userSchema = new mongoose.Schema(
       required: true,
       trim: true,
       maxlength: 100,
+    },
+    avatarPublicId: {
+      type: String,
     },
     followers: {
       type: [
