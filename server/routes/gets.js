@@ -4,6 +4,7 @@ import Post from "../modules/Post.js";
 import authMiddleware from "../middleware/authMiddleware.js";
 import mongoose from "mongoose";
 import Like from "../modules/Like.js";
+import { sendEmail } from "../utils/sendEmail.js";
 
 const router = express.Router();
 
