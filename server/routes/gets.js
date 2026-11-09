@@ -5,6 +5,7 @@ import authMiddleware from "../middleware/authMiddleware.js";
 import mongoose from "mongoose";
 import Like from "../modules/Like.js";
 import { sendEmail } from "../utils/sendEmail.js";
+import { testEmailLimiter } from "../middleware/rateLimit.js";
 
 const router = express.Router();
 
@@ -256,19 +257,28 @@ router.get("/users/search", async (req, res) => {
   }
 });
 
-router.get("/test-email", async (req, res) => {
+router.get("/test-email", (req, res, next) => {
+  if (process.env.ENABLE_EMAIL_TEST !== "true") {
+    return res.status(404).json({ message: "Not found" });
+  }
+  return next();
+}, testEmailLimiter, async (req, res) => {
   try {
+    const recipient = process.env.TEST_EMAIL?.trim();
+    if (!recipient || !/^[^\s@,;<>]+@[^\s@,;<>]+\.[^\s@,;<>]+$/.test(recipient)) {
+      throw new Error("TEST_EMAIL must contain a single email address");
+    }
     const info = await sendEmail(
-      process.env.TEST_EMAIL,
-      "ITCHgramm — SMTP Test",
-      "<h2>SMTP works!</h2><p>Email successfully sent from Railway.</p>",
+      recipient,
+      "ITCHgram — Resend Test",
+      "<h2>Resend works!</h2><p>Email successfully sent via HTTPS API.</p>",
     );
     return res.status(200).json({
       message: "Email sent successfully",
-      messageId: info.messageId,
+      messageId: info.id,
     });
   } catch (error) {
-    console.error("SMTP test failed:", error);
+    console.error("Resend test failed:", error);
     return res.status(500).json({
       message: "Email sending failed",
     });

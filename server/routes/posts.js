@@ -389,7 +389,7 @@ router.post("/forgot-password", forgotPasswordLimiter, async (req, res) => {
     try {
       await sendEmail(
         user.email,
-        "ITCHgramm - Password Reset",
+        "ITCHgram - Password Reset",
         `<p>Your password reset code is:</p>
          <h2>${code}</h2>
          <p>This code expires in 10 minutes.</p>`,

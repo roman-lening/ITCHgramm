@@ -1,12 +1,27 @@
-import transporter from "../config/mailer.js";
+import "dotenv/config";
+import { Resend } from "resend";
 
 export const sendEmail = async (to, subject, html) => {
-  return transporter.sendMail({
-    from: `"ITCHgramm" <${process.env.EMAIL_USER}>`,
+  const apiKey = process.env.RESEND_API_KEY?.trim();
+  const from = process.env.EMAIL_FROM?.trim();
+  if (!apiKey || !from) {
+    throw new Error("RESEND_API_KEY and EMAIL_FROM are required to send email");
+  }
+
+  const resend = new Resend(apiKey);
+  const { data, error } = await resend.emails.send({
+    from,
     to,
     subject,
     html,
   });
+  if (error) {
+    throw new Error(`Resend email failed: ${error.message}`, { cause: error });
+  }
+  if (!data?.id) {
+    throw new Error("Resend returned no email ID");
+  }
+  return data;
 };
 
 export const sendWelcomeEmail = async (to, username) => {
@@ -31,7 +46,7 @@ export const sendWelcomeEmail = async (to, username) => {
         <div style="max-width:560px;margin:0 auto;background-color:#ffffff;border-radius:16px;overflow:hidden;">
           <div style="padding:32px;background-color:#171717;text-align:center;">
             <h1 style="margin:0;color:#ffffff;font-size:30px;letter-spacing:-1px;">
-              ITCHgramm
+              ITCHgram
             </h1>
           </div>
 
@@ -45,7 +60,7 @@ export const sendWelcomeEmail = async (to, username) => {
             </p>
 
             <p style="font-size:16px;line-height:1.7;">
-              Your ITCHgramm account has been successfully created.
+              Your ITCHgram account has been successfully created.
               You're officially part of our community!
             </p>
 
@@ -65,20 +80,20 @@ export const sendWelcomeEmail = async (to, username) => {
             </div>
 
             <p style="font-size:15px;line-height:1.7;">
-              See you on ITCHgramm!
+              See you on ITCHgram!
             </p>
 
             <p style="font-size:15px;font-weight:bold;">
-              The ITCHgramm Team
+              The ITCHgram Team
             </p>
           </div>
 
           <div style="padding:20px;text-align:center;background-color:#fafafa;border-top:1px solid #eeeeee;">
             <p style="font-size:12px;color:#888888;margin:0;">
-              © ITCHgramm · Made for sharing
+              © ITCHgram · Made for sharing
             </p>
             <p style="font-size:12px;color:#888888;margin:10px 0 0;">
-              You received this email because an ITCHgramm account
+              You received this email because an ITCHgram account
               was registered using this address.
             </p>
           </div>
@@ -87,5 +102,5 @@ export const sendWelcomeEmail = async (to, username) => {
     </html>
   `;
 
-  return sendEmail(to, "Welcome to ITCHgramm! 🎉", html);
+  return sendEmail(to, "Welcome to ITCHgram! 🎉", html);
 };
