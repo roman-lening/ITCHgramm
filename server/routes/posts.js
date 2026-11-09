@@ -142,23 +142,21 @@ router.post("/register", async (req, res) => {
 router.post("/login", async (req, res) => {
   try {
     const { username, password, email } = req.body ?? {};
-    if (
-      typeof password !== "string" ||
-      !password ||
-      (typeof username !== "string" && typeof email !== "string")
-    ) {
+    if (typeof password !== "string" || !password) {
       return res.status(400).json({
         message: "Valid username/email and password are required",
       });
     }
-    const login = (typeof email === "string" && email.trim() ? email : username)
-      ?.trim()
-      .toLowerCase();
-    if (!login) {
+    const identifier =
+      typeof email === "string" && email.trim()
+        ? email
+        : username;
+    if (typeof identifier !== "string" || !identifier.trim()) {
       return res.status(400).json({
         message: "Username or email is required",
       });
     }
+    const login = identifier.trim().toLowerCase();
     const user = await User.findOne({
       $or: [{ username: login }, { email: login }],
     }).select("+password");

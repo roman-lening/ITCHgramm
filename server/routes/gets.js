@@ -225,12 +225,12 @@ router.get("/posts/:id/likes", async (req, res) => {
 
 router.get("/users/search", async (req, res) => {
   try {
-    const query = req.query.q?.trim();
-    if (!query || typeof query !== "string") {
+    if (typeof req.query.q !== "string" || !req.query.q.trim()) {
       return res.status(400).json({
         message: "Search query is required",
       });
     }
+    const query = req.query.q.trim();
     const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const users = await User.find({
       $or: [
@@ -253,34 +253,6 @@ router.get("/users/search", async (req, res) => {
     console.error(error);
     return res.status(500).json({
       message: "Internal server error",
-    });
-  }
-});
-
-router.get("/test-email", (req, res, next) => {
-  if (process.env.ENABLE_EMAIL_TEST !== "true") {
-    return res.status(404).json({ message: "Not found" });
-  }
-  return next();
-}, testEmailLimiter, async (req, res) => {
-  try {
-    const recipient = process.env.TEST_EMAIL?.trim();
-    if (!recipient || !/^[^\s@,;<>]+@[^\s@,;<>]+\.[^\s@,;<>]+$/.test(recipient)) {
-      throw new Error("TEST_EMAIL must contain a single email address");
-    }
-    const info = await sendEmail(
-      recipient,
-      "ITCHgram — Resend Test",
-      "<h2>Resend works!</h2><p>Email successfully sent via HTTPS API.</p>",
-    );
-    return res.status(200).json({
-      message: "Email sent successfully",
-      messageId: info.id,
-    });
-  } catch (error) {
-    console.error("Resend test failed:", error);
-    return res.status(500).json({
-      message: "Email sending failed",
     });
   }
 });
