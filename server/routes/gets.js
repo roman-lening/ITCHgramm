@@ -5,7 +5,6 @@ import authMiddleware from "../middleware/authMiddleware.js";
 import mongoose from "mongoose";
 import Like from "../modules/Like.js";
 import { sendEmail } from "../utils/sendEmail.js";
-import { testEmailLimiter } from "../middleware/rateLimit.js";
 
 const router = express.Router();
 
