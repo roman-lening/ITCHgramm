@@ -12,7 +12,7 @@ import {
   uploadToCloudinary,
   deleteFromCloudinary,
 } from "../utils/cloudinaryMedia.js";
-import { sendEmail, sendWelcomeEmail } from "../utils/sendEmail.js";
+import { sendPasswordResetEmail, sendWelcomeEmail } from "../utils/sendEmail.js";
 import crypto from "node:crypto";
 import {
   forgotPasswordLimiter,
@@ -385,13 +385,7 @@ router.post("/forgot-password", forgotPasswordLimiter, async (req, res) => {
     user.resetPasswordExpires = new Date(Date.now() + 10 * 60 * 1000);
     await user.save();
     try {
-      await sendEmail(
-        user.email,
-        "ITCHgram - Password Reset",
-        `<p>Your password reset code is:</p>
-         <h2>${code}</h2>
-         <p>This code expires in 10 minutes.</p>`,
-      );
+      await sendPasswordResetEmail(user.email, code);
     } catch (mailError) {
       console.error("Password reset email failed:", mailError);
       await User.updateOne(
