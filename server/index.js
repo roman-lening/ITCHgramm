@@ -15,12 +15,13 @@ app.use(
   cors({
     origin: (origin, callback) => {
       const allowedOrigins = [
+        "https://itchgram.de",
         "https://itchgramm.vercel.app",
         "http://localhost:5173",
       ];
       const isVercelDeployment =
         /^https:\/\/itchgramm-[a-z0-9-]+-roman-lening\.vercel\.app$/.test(
-          origin || ""
+          origin || "",
         );
       if (!origin || allowedOrigins.includes(origin) || isVercelDeployment) {
         callback(null, true);
@@ -28,7 +29,7 @@ app.use(
         callback(new Error("Not allowed by CORS"));
       }
     },
-  })
+  }),
 );
 
 app.use(express.json());
@@ -42,7 +43,7 @@ app.get("/", (req, res) => {
 async function startServer() {
   try {
     await connectDB();
-    app.listen(port, host,  () => {
+    app.listen(port, host, () => {
       console.log(`Server running on port ${port}`);
     });
   } catch (error) {
