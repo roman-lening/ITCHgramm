@@ -141,7 +141,7 @@ export default function App() {
   return (
     <main style={styles.page}>
       <section style={styles.card}>
-        <h1 style={styles.title}>ITCHgramm</h1>
+        <h1 style={styles.title}>ITCHgram</h1>
         <p style={styles.subtitle}>
           Мы ещё работаем над приложением. А пока — сыграй с драконом!
         </p>
