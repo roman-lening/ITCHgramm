@@ -81,6 +81,39 @@ router.get("/profile/:username", async (req, res) => {
   }
 });
 
+router.get("/posts/feed", authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId).select("following");
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+    const posts = await Post.find({
+      author: { $in: user.following },
+    })
+      .populate("author", "username avatarUrl")
+      .sort({ createdAt: -1 });
+    const postsWithLikes = await Promise.all(
+      posts.map(async (post) => {
+        const likesCount = await Like.countDocuments({
+          post: post._id,
+        });
+        return {
+          ...post.toObject(),
+          likesCount,
+        };
+      }),
+    );
+    return res.status(200).json(postsWithLikes);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+});
+
 router.get("/posts/:id", async (req, res) => {
   try {
     const { id } = req.params;
