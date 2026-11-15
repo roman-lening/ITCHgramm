@@ -47,7 +47,9 @@ function Login() {
               onChange={(e) => setPassword(e.target.value)}
               sx={styles.input}
             />
-          <Button type="submit" sx={styles.loginButton}>Log in</Button>
+            <Button type="submit" sx={styles.loginButton}>
+              Log in
+            </Button>
           </Box>
 
           <Box sx={styles.dividerContainer}>
@@ -66,7 +68,7 @@ function Login() {
         <Box sx={styles.signupCard}>
           <Typography sx={styles.signupText}>Don't have an account?</Typography>
 
-          <NavLink to="" style={styles.signupLink}>
+          <NavLink to="/register" style={styles.signupLink}>
             Sign up
           </NavLink>
         </Box>
