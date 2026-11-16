@@ -21,11 +21,9 @@ function Register() {
     <Box sx={styles.rightContainer}>
       <Box sx={styles.registerCard}>
         <Box component="img" src={itchgram} alt="itchgram" sx={styles.logo} />
-
         <Typography sx={styles.title}>
           Sign up to see photos and videos from your friends.
         </Typography>
-
         <Box component="form" onSubmit={handleSubmit} sx={styles.registerForm}>
           <Box sx={styles.form}>
             <TextField
@@ -36,7 +34,6 @@ function Register() {
               onChange={(e) => setEmail(e.target.value)}
               sx={styles.input}
             />
-
             <TextField
               placeholder="Full Name"
               required
@@ -44,7 +41,6 @@ function Register() {
               onChange={(e) => setFullName(e.target.value)}
               sx={styles.input}
             />
-
             <TextField
               placeholder="Username"
               required
@@ -52,7 +48,6 @@ function Register() {
               onChange={(e) => setUsername(e.target.value)}
               sx={styles.input}
             />
-
             <TextField
               placeholder="Password"
               type="password"
@@ -62,7 +57,6 @@ function Register() {
               sx={styles.input}
             />
           </Box>
-
           <Box sx={styles.termsContainer}>
             <Typography sx={styles.contactText}>
               People who use our service may have uploaded your contact

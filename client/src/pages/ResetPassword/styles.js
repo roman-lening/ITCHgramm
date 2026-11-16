@@ -116,7 +116,7 @@ export const styles = {
     lineHeight: "129%",
     textAlign: "center",
     color: "#262626",
-    paddingBottom: "84px",
+    marginBottom: "84px",
   },
   backToLogin: {
     fontWeight: 600,

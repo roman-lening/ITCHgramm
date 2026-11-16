@@ -60,7 +60,7 @@ function Login() {
             <Divider sx={styles.divider} />
           </Box>
 
-          <NavLink to="" style={styles.forgotPassword}>
+          <NavLink to="/reset-password" style={styles.forgotPassword}>
             Forgot password?
           </NavLink>
         </Box>

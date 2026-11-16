@@ -50,13 +50,13 @@ function ResetPassword() {
           </Typography>
           <Divider sx={styles.divider} />
         </Box>
-        <NavLink to="" style={styles.createAccount}>
+        <NavLink to="/register" style={styles.createAccount}>
           Create new account
         </NavLink>
       </Box>
       <Box
         component={NavLink}
-        to=""
+        to="/login"
         sx={styles.backToLogin}
       >
         Back to login
