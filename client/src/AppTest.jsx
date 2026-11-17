@@ -5,6 +5,8 @@ import { Routes, Route } from "react-router-dom";
 import Register from "./pages/Register";
 import ResetPassword from "./pages/ResetPassword";
 import Drawerr from "./components/Drawer";
+import Post from "./components/Post";
+import EndPosts from "./components/EndPosts";
 
 function AppTest() {
   return (
@@ -12,6 +14,8 @@ function AppTest() {
       <Login />
       <Register />
       <ResetPassword />
+      <Post />
+      <EndPosts />
       <Footer />
       <Drawerr />
       <Routes>

@@ -15,6 +15,9 @@ export const styles = {
   mainDrawer: {
     width: drawerWidth,
     flexShrink: 0,
+    position: "relative",
+    zIndex: 1400,
+
     "& .MuiDrawer-paper": {
       width: drawerWidth,
       boxSizing: "border-box",
@@ -62,7 +65,35 @@ export const styles = {
     alignSelf: "flex-end",
   }),
 
-  searchDrawer: secondaryDrawer(397),
+  searchDrawer: {
+    left: `${drawerWidth}px`,
+    width: `calc(100% - ${drawerWidth}px)`,
 
-  messageDrawer: secondaryDrawer(398),
+    "& .MuiDrawer-paper": {
+      left: `${drawerWidth}px`,
+      width: `min(397px, calc(100vw - ${drawerWidth}px))`,
+      borderRight: "1px solid #dbdbdb",
+      borderRadius: "0 16px 16px 0",
+      boxShadow: "4px 0 24px 0 rgba(0, 0, 0, 0.15)",
+      background: "#fff",
+      paddingTop: "24px",
+      paddingLeft: "16px",
+      paddingRight: "16px",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "flex-start",
+      gap: "40px",
+      zIndex: 1300,
+    },
+
+    "& .MuiBackdrop-root": {
+      left: `${drawerWidth}px`,
+      backgroundColor: "rgba(0, 0, 0, 0.25)",
+    },
+  },
+
+  messageDrawer: {
+    ...secondaryDrawer(398),
+    zIndex: 1200,
+  },
 };

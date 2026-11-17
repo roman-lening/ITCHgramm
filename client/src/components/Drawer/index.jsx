@@ -2,6 +2,7 @@ import Box from "@mui/material/Box";
 import Drawer from "@mui/material/Drawer";
 import { NavLink } from "react-router-dom";
 import List from "@mui/material/List";
+import InputBase from "@mui/material/InputBase";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import itchgram from "../../assets/itchgram.png";
@@ -132,7 +133,6 @@ function Drawerr() {
               Messages
             </Typography>
           </NavLink>
-
           <Button onClick={handleNotification} sx={styles.item}>
             <Box
               component="img"
@@ -165,18 +165,113 @@ function Drawerr() {
       </Drawer>
 
       <Drawer
-        variant="persistent"
+        variant="temporary"
         anchor="left"
         open={openSearch}
+        onClose={() => setOpenSearch(false)}
+        transitionDuration={{ enter: 450, exit: 350 }}
         sx={styles.searchDrawer}
       >
-        <Typography>Search</Typography>
+        <Typography
+          sx={{
+            fontWeight: 600,
+            fontSize: "24px",
+            lineHeight: "125%",
+            color: "#000",
+            paddingLeft: "8px",
+          }}
+        >
+          Search
+        </Typography>
+        <InputBase
+          type="search"
+          placeholder="Search"
+          fullWidth
+          inputProps={{ "aria-label": "Search users" }}
+          sx={{
+            fontSize: "16px",
+            color: "#737373",
+            fontWeight: 300,
+            background: "#efefef",
+            borderRadius: "8px",
+            width: "100%",
+            paddingLeft: "16px",
+            paddingRight: "16px",
+            paddingTop: "10.5px",
+            paddingBottom: "10.5px",
+            "& input::-webkit-search-cancel-button": {
+              WebkitAppearance: "none",
+              appearance: "none",
+              width: "20px",
+              height: "20px",
+              borderRadius: "50%",
+              backgroundColor: "#C4C4C4",
+              cursor: "pointer",
+              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M18 6 6 18M6 6l12 12' stroke='white' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E")`,
+              backgroundSize: "12px",
+              backgroundPosition: "center",
+              backgroundRepeat: "no-repeat",
+            },
+          }}
+        />
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "26px",
+            alignItems: "flex-start",
+          }}
+        >
+          <Typography
+            sx={{
+              fontWeight: 600,
+              fontSize: "16px",
+              lineHeight: "125%",
+              color: "#000",
+            }}
+          >
+            Recent
+          </Typography>
+          <Box>
+            <NavLink
+              to="/userProfile:id"
+              style={{
+                display: "flex",
+                justifyContent: "flex-start",
+                alignItems: "center",
+                gap: "8px",
+              }}
+            >
+              <Box
+                component="img"
+                src={itchgram}
+                alt="itchgram"
+                sx={{
+                  borderRadius: "19px",
+                  width: "38px",
+                  height: "38px",
+                }}
+              />
+              <Typography
+                sx={{
+                  fontWeight: 700,
+                  fontSize: "14px",
+                  lineHeight: "129%",
+                  color: "#000",
+                }}
+              >
+                username
+              </Typography>
+            </NavLink>
+          </Box>
+        </Box>
       </Drawer>
 
       <Drawer
         variant="persistent"
         anchor="left"
         open={openMessage}
+        transitionDuration={{ enter: 450, exit: 350 }}
         sx={styles.messageDrawer}
       >
         <Typography>Messages</Typography>
