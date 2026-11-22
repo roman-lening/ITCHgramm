@@ -15,6 +15,7 @@ import Explore from "./pages/Explore";
 import Home from "./pages/Home";
 import VerifyCode from "./pages/VerifyCode";
 import Error from "./pages/Error";
+import EditProfile from "./pages/EditProfile";
 
 function AppTest() {
   return (
@@ -32,6 +33,7 @@ function AppTest() {
       <Explore />
       <Home />
       <Error />
+      <EditProfile />
       <Footer />
       <Drawerr />
     </Box>

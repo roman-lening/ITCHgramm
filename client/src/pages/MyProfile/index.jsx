@@ -1,4 +1,3 @@
-
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
@@ -8,6 +7,7 @@ import testImage from "../../assets/TestImagePost.svg";
 import { useState, useRef, useEffect } from "react";
 import MyPostModal from "../MyPostModal/index.jsx";
 import { styles } from "./styles";
+import linkWebImg from "../../assets/linkWeb.svg";
 
 function MyProfile() {
   const [expanded, setExpanded] = useState(false);
@@ -55,36 +55,21 @@ function MyProfile() {
   return (
     <Box sx={styles.container}>
       <Box sx={styles.header}>
-        <Box
-          component="img"
-          src={itchgram}
-          alt="itchgram"
-          sx={styles.avatar}
-        />
+        <Box component="img" src={itchgram} alt="itchgram" sx={styles.avatar} />
 
         <Box sx={styles.profileInfo}>
           <Box sx={styles.profileActions}>
-            <Typography sx={styles.username}>
-              username
-            </Typography>
+            <Typography sx={styles.username}>username</Typography>
 
-            <Button sx={styles.messageButton}>
-              Edit profile
-            </Button>
+            <Button sx={styles.messageButton}>Edit profile</Button>
           </Box>
 
           <Box sx={styles.statistics}>
-            <Typography sx={styles.postsCount}>
-              129 posts
-            </Typography>
+            <Typography sx={styles.postsCount}>129 posts</Typography>
 
-            <Typography sx={styles.statText}>
-              9 993 followers
-            </Typography>
+            <Typography sx={styles.statText}>9 993 followers</Typography>
 
-            <Typography sx={styles.statText}>
-              59 following
-            </Typography>
+            <Typography sx={styles.statText}>59 following</Typography>
           </Box>
 
           <Box sx={styles.bioContainer}>
@@ -113,6 +98,33 @@ function MyProfile() {
                 {expanded ? "less" : "more"}
               </Button>
             )}
+            <Box
+              sx={{
+                display: "flex",
+                gap: "7px",
+                alignItems: "center",
+              }}
+            >
+              <Box
+                component="img"
+                src={linkWebImg}
+                alt="linkWebImg"
+                sx={{
+                  width: "12px",
+                  height: "12px",
+                }}
+              ></Box>
+              <Typography
+                sx={{
+                  fontWeight: 600,
+                  fontSize: "14px",
+                  lineHeight: "129%",
+                  color: "#00376b",
+                }}
+              >
+                bit.ly/3rpiIbh
+              </Typography>
+            </Box>
           </Box>
         </Box>
       </Box>
@@ -130,10 +142,7 @@ function MyProfile() {
         ))}
       </Box>
 
-      <Modal
-        open={openPost}
-        onClose={() => setOpenPost(false)}
-      >
+      <Modal open={openPost} onClose={() => setOpenPost(false)}>
         <Box sx={styles.modalContent}>
           <MyPostModal />
         </Box>
