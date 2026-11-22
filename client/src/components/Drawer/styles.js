@@ -63,6 +63,7 @@ export const styles = {
     lineHeight: "125%",
     color: "#000",
     alignSelf: "flex-end",
+    textTransform: "none",
   }),
 
   searchDrawer: {

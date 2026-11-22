@@ -21,7 +21,7 @@ function Post() {
           <Box
             component="img"
             src={itchgram}
-            alt="home"
+            alt="itchgram"
             sx={styles.avatar}
           />
 
