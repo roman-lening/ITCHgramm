@@ -1,4 +1,3 @@
-
 export const styles = {
   container: {
     display: "flex",
@@ -68,14 +67,14 @@ export const styles = {
     objectFit: "contain",
   },
 
- form: {
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  justifyContent: "center",
-  width: "100%",
-  gap: "6px",
-},
+  form: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "100%",
+    gap: "6px",
+  },
 
   input: {
     width: "100%",
@@ -168,5 +167,23 @@ export const styles = {
     lineHeight: "129%",
     textAlign: "center",
     color: "#0095f6",
+  },
+
+  formError: {
+    width: "100%",
+    fontWeight: 400,
+    fontSize: "12px",
+    lineHeight: "129%",
+    textAlign: "center",
+    color: "#ed4956",
+  },
+
+  successText: {
+    width: "100%",
+    fontWeight: 400,
+    fontSize: "12px",
+    lineHeight: "129%",
+    textAlign: "center",
+    color: "#008a45",
   },
 };

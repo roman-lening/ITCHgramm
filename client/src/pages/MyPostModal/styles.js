@@ -1,4 +1,3 @@
-
 export const styles = {
   container: {
     display: "flex",
@@ -24,7 +23,7 @@ export const styles = {
     borderLeft: "0.85px solid #efefef",
     borderRadius: "0 3px 3px 0",
     paddingRight: "11px",
-    background: "white"
+    background: "white",
   },
 
   topSection: {
@@ -37,12 +36,18 @@ export const styles = {
 
   header: {
     display: "flex",
-    justifyContent: "flex-start",
+    justifyContent: "space-between",
     flexShrink: 0,
     borderBottom: "0.85px solid #efefef",
     gap: "7px",
     alignItems: "center",
     paddingLeft: "13px",
+  },
+
+  headerUser: {
+    display: "flex",
+    gap: "7px",
+    alignItems: "center",
   },
 
   iconButton: {
@@ -115,6 +120,30 @@ export const styles = {
     flexDirection: "column",
     gap: "6px",
     justifyContent: "flex-start",
+  },
+
+  menuButton: {
+    minWidth: 0,
+    width: "20px",
+    height: "20px",
+    padding: 0,
+    color: "#000",
+    fontSize: "16px",
+    lineHeight: 1,
+    textAlign: "center",
+  },
+
+  editMenuOverlay: {
+    position: "fixed",
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: "245px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    background: "rgba(0, 0, 0, 0.25)",
+    zIndex: 1400,
   },
 
   descriptionText: {
@@ -275,6 +304,6 @@ export const styles = {
     lineHeight: "129%",
     textAlign: "center",
     color: "#0095f6",
-    textTransform: "none"
+    textTransform: "none",
   },
 };

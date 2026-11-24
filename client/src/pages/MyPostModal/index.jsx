@@ -1,221 +1,172 @@
+import { useState } from "react";
+import { useSelector } from "react-redux";
+import { NavLink } from "react-router-dom";
 
 import Button from "@mui/material/Button";
-import { NavLink } from "react-router-dom";
-import Divider from "@mui/material/Divider";
 import IconButton from "@mui/material/IconButton";
-import testImage from "../../assets/TestImagePost.svg";
-import itchgram from "../../assets/itchgram.png";
 import Typography from "@mui/material/Typography";
-import like from "../../assets/DrawerSvg/Light/Notification.svg";
 import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
-import comment from "../../assets/Comment.svg";
-import SentimentSatisfiedAltOutlinedIcon from "@mui/icons-material/SentimentSatisfiedAltOutlined";
-import { styles } from "./styles";
-import { useState } from "react";
 
-function MyPostModal() {
+import SentimentSatisfiedAltOutlinedIcon from "@mui/icons-material/SentimentSatisfiedAltOutlined";
+
+import itchgram from "../../assets/itchgram.png";
+import like from "../../assets/DrawerSvg/Light/Notification.svg";
+import comment from "../../assets/Comment.svg";
+
+import EditPost from "../EditPost";
+import { styles } from "./styles";
+
+const formatPostDate = (date) => {
+  if (!date) return "";
+
+  const postDate = new Date(date);
+
+  if (Number.isNaN(postDate.getTime())) return "";
+
+  return postDate.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+};
+
+function MyPostModal({ post }) {
   const [commentar, setComment] = useState("");
+  const [openEditPost, setOpenEditPost] = useState(false);
+
+  const user = useSelector((state) => state.profile.myProfile?.user);
+
+  if (!post) return null;
+
+  const username = user?.username ?? "";
+  const avatarUrl = user?.avatarUrl || itchgram;
+  const postDate = formatPostDate(post.createdAt);
+
+  const likesText =
+    typeof post.likesCount === "number" ? `${post.likesCount} likes` : "Likes";
 
   return (
     <Box sx={styles.container}>
-      <Box
-        component="img"
-        src={testImage}
-        alt="testImage"
-        sx={styles.postImage}
+      {post.image ? (
+        <Box
+          component="img"
+          src={post.image}
+          alt={post.description || "Post"}
+          sx={styles.postImage}
           data-post-modal-content
-      />
-      <Box sx={styles.rightColumn}   data-post-modal-content>
+        />
+      ) : post.video ? (
+        <Box
+          component="video"
+          src={post.video}
+          controls
+          playsInline
+          preload="metadata"
+          sx={styles.postImage}
+          data-post-modal-content
+        />
+      ) : null}
+
+      <Box sx={styles.rightColumn} data-post-modal-content>
         <Box sx={styles.topSection}>
           <Box sx={styles.header}>
-            <IconButton aria-label="Comment on post" sx={styles.iconButton}>
-              <Box
-                component="img"
-                src={itchgram}
-                alt="itchgram"
-                sx={styles.avatar}
-              />
-            </IconButton>
-            <Box sx={styles.headerInfo}>
-              <NavLink style={styles.usernameLink}>username</NavLink>
-              <Divider sx={styles.dot} />
-              <Button sx={styles.followButton}>Подписаться</Button>
-            </Box>
-          </Box>
-          <Box sx={styles.scrollArea}>
-            <Box sx={styles.descriptionRow}>
-              <IconButton aria-label="Comment on post" sx={styles.iconButton}>
+            <Box sx={styles.headerUser}>
+              <IconButton aria-label="User profile" sx={styles.iconButton}>
                 <Box
                   component="img"
-                  src={itchgram}
-                  alt="itchgram"
+                  src={avatarUrl}
+                  alt={username}
                   sx={styles.avatar}
                 />
               </IconButton>
+
+              <NavLink to="/profile" style={styles.usernameLink}>
+                {username}
+              </NavLink>
+            </Box>
+
+            <Button
+              onClick={() => setOpenEditPost(true)}
+              sx={styles.menuButton}
+            >
+              •••
+            </Button>
+          </Box>
+
+          <Box sx={styles.scrollArea}>
+            <Box sx={styles.descriptionRow}>
+              <IconButton aria-label="User profile" sx={styles.iconButton}>
+                <Box
+                  component="img"
+                  src={avatarUrl}
+                  alt={username}
+                  sx={styles.avatar}
+                />
+              </IconButton>
+
               <Box sx={styles.descriptionBody}>
                 <Typography sx={styles.descriptionText}>
-                  <NavLink component="span" style={styles.usernameLink}>
-                    username
+                  <NavLink to="/profile" style={styles.usernameLink}>
+                    {username}
                   </NavLink>
                   {"  "}
-                  Черногории! Проект по поддержке бездомных животных TailBook, в
-                  разработке которого участвуют сразу 9 наших стажёров, будет
-                  представлен на Web Summit 2024 в Португалии🔥Черногории!
-                  Проект по поддержке бездомных животных TailBook, в разработке
-                  которого участвуют сразу 9 наших стажёров, будет представлен
-                  на Web Summit 2024 в Португалии🔥Черногории! Проект по
-                  поддержке бездомных животных TailBook, в разработке которого
-                  участвуют сразу 9 наших стажёров, будет представлен на Web
-                  Summit 2024 в Португалии🔥
+                  {post.description}
                 </Typography>
-                <Typography sx={styles.metaText}>1 day.</Typography>
+
+                <Typography sx={styles.metaText}>{postDate}</Typography>
               </Box>
             </Box>
+
             <Box sx={styles.commentsList}>
-              <Box sx={styles.commentRow}>
-                <Box sx={styles.commentAuthorRow}>
-                  <IconButton
-                    aria-label="Comment on post"
-                    sx={styles.iconButton}
-                  >
-                    <Box
-                      component="img"
-                      src={itchgram}
-                      alt="itchgram"
-                      sx={styles.avatar}
-                    />
-                  </IconButton>
-                  <Box sx={styles.commentDetails}>
-                    <Box sx={styles.commentContentRow}>
-                      <NavLink style={styles.usernameLink}>username</NavLink>
-                      <Typography sx={styles.commentText}>
-                        спасибо!!!!
-                      </Typography>
-                    </Box>
-                    <Box sx={styles.commentMetaRow}>
-                      <Typography sx={styles.metaText}>17 h.</Typography>
-                      <Typography sx={styles.metaText}>Likes: 1</Typography>
-                    </Box>
-                  </Box>
-                </Box>
-                <IconButton aria-label="Comment on post" sx={styles.iconButton}>
-                  <Box
-                    component="img"
-                    src={like}
-                    alt="like"
-                    sx={styles.commentLikeIcon}
-                  />
-                </IconButton>
-              </Box>
-              <Box sx={styles.commentRow}>
-                <Box sx={styles.commentAuthorRow}>
-                  <IconButton
-                    aria-label="Comment on post"
-                    sx={styles.iconButton}
-                  >
-                    <Box
-                      component="img"
-                      src={itchgram}
-                      alt="itchgram"
-                      sx={styles.avatar}
-                    />
-                  </IconButton>
-                  <Box sx={styles.commentDetails}>
-                    <Box sx={styles.commentContentRow}>
-                      <NavLink style={styles.usernameLink}>username</NavLink>
-                      <Typography sx={styles.commentText}>
-                        спасибо!!!!
-                      </Typography>
-                    </Box>
-                    <Box sx={styles.commentMetaRow}>
-                      <Typography sx={styles.metaText}>17 h.</Typography>
-                      <Typography sx={styles.metaText}>Likes: 1</Typography>
+              {Array.from({ length: 4 }, (_, index) => (
+                <Box key={index} sx={styles.commentRow}>
+                  <Box sx={styles.commentAuthorRow}>
+                    <IconButton
+                      aria-label="Comment on post"
+                      sx={styles.iconButton}
+                    >
+                      <Box
+                        component="img"
+                        src={itchgram}
+                        alt="itchgram"
+                        sx={styles.avatar}
+                      />
+                    </IconButton>
+
+                    <Box sx={styles.commentDetails}>
+                      <Box sx={styles.commentContentRow}>
+                        <NavLink to="/profile" style={styles.usernameLink}>
+                          username
+                        </NavLink>
+
+                        <Typography sx={styles.commentText}>
+                          спасибо!!!!
+                        </Typography>
+                      </Box>
+
+                      <Box sx={styles.commentMetaRow}>
+                        <Typography sx={styles.metaText}>17 h.</Typography>
+
+                        <Typography sx={styles.metaText}>Likes: 1</Typography>
+                      </Box>
                     </Box>
                   </Box>
-                </Box>
-                <IconButton aria-label="Comment on post" sx={styles.iconButton}>
-                  <Box
-                    component="img"
-                    src={like}
-                    alt="like"
-                    sx={styles.commentLikeIcon}
-                  />
-                </IconButton>
-              </Box>
-              <Box sx={styles.commentRow}>
-                <Box sx={styles.commentAuthorRow}>
-                  <IconButton
-                    aria-label="Comment on post"
-                    sx={styles.iconButton}
-                  >
+
+                  <IconButton aria-label="Like comment" sx={styles.iconButton}>
                     <Box
                       component="img"
-                      src={itchgram}
-                      alt="itchgram"
-                      sx={styles.avatar}
+                      src={like}
+                      alt="like"
+                      sx={styles.commentLikeIcon}
                     />
                   </IconButton>
-                  <Box sx={styles.commentDetails}>
-                    <Box sx={styles.commentContentRow}>
-                      <NavLink style={styles.usernameLink}>username</NavLink>
-                      <Typography sx={styles.commentText}>
-                        спасибо!!!!
-                      </Typography>
-                    </Box>
-                    <Box sx={styles.commentMetaRow}>
-                      <Typography sx={styles.metaText}>17 h.</Typography>
-                      <Typography sx={styles.metaText}>Likes: 1</Typography>
-                    </Box>
-                  </Box>
                 </Box>
-                <IconButton aria-label="Comment on post" sx={styles.iconButton}>
-                  <Box
-                    component="img"
-                    src={like}
-                    alt="like"
-                    sx={styles.commentLikeIcon}
-                  />
-                </IconButton>
-              </Box>
-              <Box sx={styles.commentRow}>
-                <Box sx={styles.commentAuthorRow}>
-                  <IconButton
-                    aria-label="Comment on post"
-                    sx={styles.iconButton}
-                  >
-                    <Box
-                      component="img"
-                      src={itchgram}
-                      alt="itchgram"
-                      sx={styles.avatar}
-                    />
-                  </IconButton>
-                  <Box sx={styles.commentDetails}>
-                    <Box sx={styles.commentContentRow}>
-                      <NavLink style={styles.usernameLink}>username</NavLink>
-                      <Typography sx={styles.commentText}>
-                        спасибо!!!!
-                      </Typography>
-                    </Box>
-                    <Box sx={styles.commentMetaRow}>
-                      <Typography sx={styles.metaText}>17 h.</Typography>
-                      <Typography sx={styles.metaText}>Likes: 1</Typography>
-                    </Box>
-                  </Box>
-                </Box>
-                <IconButton aria-label="Comment on post" sx={styles.iconButton}>
-                  <Box
-                    component="img"
-                    src={like}
-                    alt="like"
-                    sx={styles.commentLikeIcon}
-                  />
-                </IconButton>
-              </Box>
+              ))}
             </Box>
           </Box>
         </Box>
+
         <Box sx={styles.bottomSection}>
           <Box>
             <Box sx={styles.actions}>
@@ -225,6 +176,7 @@ function MyPostModal() {
                 alt="like"
                 sx={styles.actionIcon}
               />
+
               <Box
                 component="img"
                 src={comment}
@@ -232,9 +184,11 @@ function MyPostModal() {
                 sx={styles.actionIcon}
               />
             </Box>
+
             <Box sx={styles.likesInfo}>
-              <Typography sx={styles.likesCount}>25 likes</Typography>
-              <Typography sx={styles.postDate}>1 day</Typography>
+              <Typography sx={styles.likesCount}>{likesText}</Typography>
+
+              <Typography sx={styles.postDate}>{postDate}</Typography>
             </Box>
           </Box>
 
@@ -254,6 +208,21 @@ function MyPostModal() {
           </Box>
         </Box>
       </Box>
+
+      {openEditPost && (
+        <Box
+          sx={styles.editMenuOverlay}
+          data-post-modal-content
+          onClick={() => setOpenEditPost(false)}
+        >
+          <Box onClick={(event) => event.stopPropagation()}>
+            <EditPost
+              onCancel={() => setOpenEditPost(false)}
+              onGoToPost={() => setOpenEditPost(false)}
+            />
+          </Box>
+        </Box>
+      )}
     </Box>
   );
 }

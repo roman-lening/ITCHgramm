@@ -158,20 +158,27 @@ router.patch(
     let saved = false;
 
     try {
-      const { username, bio } = req.body ?? {};
+      const { username, bio, website } = req.body ?? {};
       const avatar = req.file;
 
       if (
         (username !== undefined &&
           (typeof username !== "string" || !username.trim())) ||
-        (bio !== undefined && typeof bio !== "string")
+        (bio !== undefined && typeof bio !== "string") ||
+        (website !== undefined &&
+          (typeof website !== "string" || website.trim().length > 200))
       ) {
         return res.status(400).json({
           message: "Invalid profile data",
         });
       }
 
-      if (username === undefined && bio === undefined && !avatar) {
+      if (
+        username === undefined &&
+        bio === undefined &&
+        website === undefined &&
+        !avatar
+      ) {
         return res.status(400).json({
           message: "No data provided",
         });
@@ -195,6 +202,10 @@ router.patch(
         user.bio = bio.trim();
       }
 
+      if (website !== undefined) {
+        user.website = website.trim();
+      }
+
       if (avatar) {
         uploaded = await uploadToCloudinary(avatar, "itchgramm/avatars");
 
@@ -216,6 +227,7 @@ router.patch(
           username: user.username,
           fullname: user.fullname,
           bio: user.bio,
+          website: user.website,
           avatarUrl: user.avatarUrl,
         },
       });

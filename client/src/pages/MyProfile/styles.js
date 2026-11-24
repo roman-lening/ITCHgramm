@@ -1,4 +1,3 @@
-
 const statText = {
   fontWeight: 600,
   fontSize: "16px",
@@ -122,6 +121,25 @@ export const styles = {
     textTransform: "none",
   },
 
+  websiteContainer: {
+    display: "flex",
+    gap: "7px",
+    alignItems: "center",
+    textDecoration: "none",
+  },
+
+  websiteIcon: {
+    width: "12px",
+    height: "12px",
+  },
+
+  websiteText: {
+    fontWeight: 600,
+    fontSize: "14px",
+    lineHeight: "129%",
+    color: "#00376b",
+  },
+
   postsGrid: {
     display: "grid",
     justifyContent: "center",
@@ -147,5 +165,12 @@ export const styles = {
   modalContent: {
     width: "100%",
     margin: "0 auto",
+  },
+
+  statusText: {
+    fontWeight: 400,
+    fontSize: "14px",
+    lineHeight: "129%",
+    color: "#737373",
   },
 };

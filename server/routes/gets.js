@@ -8,6 +8,7 @@ import { sendEmail } from "../utils/sendEmail.js";
 
 const router = express.Router();
 
+
 router.get("/profile", authMiddleware, async (req, res) => {
   try {
     const user = await User.findById(req.userId);
@@ -22,18 +23,30 @@ router.get("/profile", authMiddleware, async (req, res) => {
     const postsCount = await Post.countDocuments({
       author: user._id,
     });
+    const postsWithLikes = await Promise.all(
+      posts.map(async (post) => {
+        const likesCount = await Like.countDocuments({
+          post: post._id,
+        });
+        return {
+          ...post.toObject(),
+          likesCount,
+        };
+      }),
+    );
     return res.status(200).json({
       user: {
         id: user._id,
         username: user.username,
         fullname: user.fullname,
         bio: user.bio,
+        website: user.website,
         avatarUrl: user.avatarUrl,
         postsCount,
         followersCount: user.followers.length,
         followingCount: user.following.length,
       },
-      posts,
+      posts: postsWithLikes,
     });
   } catch (error) {
     console.error(error);
@@ -43,12 +56,16 @@ router.get("/profile", authMiddleware, async (req, res) => {
   }
 });
 
+
+
 router.get("/profile/:username", async (req, res) => {
   try {
     const { username } = req.params;
     const user = await User.findOne({
       username: username.toLowerCase(),
-    }).select("username fullname bio avatarUrl followers following");
+    }).select(
+      "username fullname bio website avatarUrl followers following",
+    );
     if (!user) {
       return res.status(404).json({
         message: "User not found",
@@ -60,18 +77,31 @@ router.get("/profile/:username", async (req, res) => {
     const postsCount = await Post.countDocuments({
       author: user._id,
     });
+    const postsWithLikes = await Promise.all(
+      posts.map(async (post) => {
+        const likesCount = await Like.countDocuments({
+          post: post._id,
+        });
+
+        return {
+          ...post.toObject(),
+          likesCount,
+        };
+      }),
+    );
     return res.status(200).json({
       user: {
         id: user._id,
         username: user.username,
         fullname: user.fullname,
         bio: user.bio,
+        website: user.website,
         avatarUrl: user.avatarUrl,
         postsCount,
         followersCount: user.followers.length,
         followingCount: user.following.length,
       },
-      posts,
+      posts: postsWithLikes,
     });
   } catch (error) {
     console.error(error);
@@ -80,6 +110,7 @@ router.get("/profile/:username", async (req, res) => {
     });
   }
 });
+
 
 router.get("/posts/feed", authMiddleware, async (req, res) => {
   try {

@@ -7,6 +7,7 @@ export const styles = {
     width: "100%",
     maxWidth: "390px",
     margin: "0 auto",
+    marginTop: "93px",
     paddingTop: "25px",
     paddingLeft: {
       xs: "20px",
@@ -136,5 +137,12 @@ export const styles = {
       sm: "calc(100% + 90px)",
     },
     textDecoration: "none",
+  },
+  errorText: {
+    fontWeight: 400,
+    fontSize: "12px",
+    lineHeight: "129%",
+    textAlign: "center",
+    color: "#ed4956",
   },
 };

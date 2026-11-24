@@ -135,18 +135,29 @@ export const styles = {
     color: "#737373",
   },
 
-resendButton: {
-  padding: 0,
-  minWidth: 0,
-  fontWeight: 600,
-  fontSize: "13px",
-  lineHeight: "129%",
-  color: "#0095f6",
-  textTransform: "none",
-  "&.Mui-disabled": {
-    color: "#737373",
+  resendButton: {
+    padding: 0,
+    minWidth: 0,
+    fontWeight: 600,
+    fontSize: "13px",
+    lineHeight: "129%",
+    color: "#0095f6",
+    textTransform: "none",
+    "&.Mui-disabled": {
+      color: "#737373",
+    },
   },
-},
+
+  changeCodeButton: {
+    padding: 0,
+    minWidth: 0,
+    fontWeight: 600,
+    fontSize: "13px",
+    lineHeight: "129%",
+    color: "#0095f6",
+    textTransform: "none",
+    marginBottom: "16px",
+  },
 
   messageText: {
     fontWeight: 400,

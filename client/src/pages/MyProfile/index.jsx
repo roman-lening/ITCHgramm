@@ -2,21 +2,36 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import Modal from "@mui/material/Modal";
-import itchgram from "../../assets/itchgram.png";
-import testImage from "../../assets/TestImagePost.svg";
+import { NavLink } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
-import MyPostModal from "../MyPostModal/index.jsx";
-import { styles } from "./styles";
+import { useDispatch, useSelector } from "react-redux";
+
+import itchgram from "../../assets/itchgram.png";
 import linkWebImg from "../../assets/linkWeb.svg";
+import MyPostModal from "../MyPostModal/index.jsx";
+import { getMyProfile } from "../../redux/slices/profileSlice.js";
+import { styles } from "./styles";
 
 function MyProfile() {
+  const dispatch = useDispatch();
+
+  const { myProfile, loading, error } = useSelector((state) => state.profile);
+
+  const user = myProfile?.user;
+  const posts = myProfile?.posts ?? [];
+
   const [expanded, setExpanded] = useState(false);
   const [isOverflowing, setIsOverflowing] = useState(false);
-  const [openPost, setOpenPost] = useState(false);
+  const [selectedPost, setSelectedPost] = useState(null);
+
   const textRef = useRef(null);
 
   useEffect(() => {
-    if (!openPost) return;
+    dispatch(getMyProfile());
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (!selectedPost) return;
 
     const handleOutsideClick = (event) => {
       const isInsidePost =
@@ -26,7 +41,7 @@ function MyProfile() {
       if (!isInsidePost) {
         event.stopPropagation();
         event.preventDefault();
-        setOpenPost(false);
+        setSelectedPost(null);
       }
     };
 
@@ -35,60 +50,114 @@ function MyProfile() {
     return () => {
       document.removeEventListener("click", handleOutsideClick, true);
     };
-  }, [openPost]);
+  }, [selectedPost]);
 
   useEffect(() => {
     const element = textRef.current;
-    if (!element) return;
+
+    if (!element) {
+      setIsOverflowing(false);
+      return;
+    }
 
     const checkOverflow = () => {
       setIsOverflowing(element.scrollHeight > 52);
     };
 
     const observer = new ResizeObserver(checkOverflow);
+
     observer.observe(element);
     checkOverflow();
 
     return () => observer.disconnect();
-  }, []);
+  }, [user?.bio]);
+
+  if (loading && !myProfile) {
+    return (
+      <Box sx={styles.container}>
+        <Typography sx={styles.statusText}>Loading profile...</Typography>
+      </Box>
+    );
+  }
+
+  if (error && !myProfile) {
+    return (
+      <Box sx={styles.container}>
+        <Typography sx={styles.statusText}>{error}</Typography>
+      </Box>
+    );
+  }
+
+  if (!user) {
+    return (
+      <Box sx={styles.container}>
+        <Typography sx={styles.statusText}>Profile not found.</Typography>
+      </Box>
+    );
+  }
+
+  const website = user.website?.trim() ?? "";
+
+  const websiteHref = (() => {
+    if (!website) return null;
+
+    try {
+      const url = new URL(
+        /^https?:\/\//i.test(website) ? website : `https://${website}`,
+      );
+
+      return ["http:", "https:"].includes(url.protocol) ? url.href : null;
+    } catch {
+      return null;
+    }
+  })();
+
+  const formatCount = (value) =>
+    new Intl.NumberFormat("ru-RU").format(value ?? 0);
 
   return (
     <Box sx={styles.container}>
       <Box sx={styles.header}>
-        <Box component="img" src={itchgram} alt="itchgram" sx={styles.avatar} />
+        <Box
+          component="img"
+          src={user.avatarUrl || itchgram}
+          alt={user.username}
+          sx={styles.avatar}
+        />
 
         <Box sx={styles.profileInfo}>
           <Box sx={styles.profileActions}>
-            <Typography sx={styles.username}>username</Typography>
+            <Typography sx={styles.username}>{user.username}</Typography>
 
-            <Button sx={styles.messageButton}>Edit profile</Button>
+            <Button
+              component={NavLink}
+              to="/edit-profile"
+              sx={styles.messageButton}
+            >
+              Edit profile
+            </Button>
           </Box>
 
           <Box sx={styles.statistics}>
-            <Typography sx={styles.postsCount}>129 posts</Typography>
+            <Typography sx={styles.postsCount}>
+              {formatCount(user.postsCount ?? posts.length)} posts
+            </Typography>
 
-            <Typography sx={styles.statText}>9 993 followers</Typography>
+            <Typography sx={styles.statText}>
+              {formatCount(user.followersCount)} followers
+            </Typography>
 
-            <Typography sx={styles.statText}>59 following</Typography>
+            <Typography sx={styles.statText}>
+              {formatCount(user.followingCount)} following
+            </Typography>
           </Box>
 
           <Box sx={styles.bioContainer}>
-            <Typography ref={textRef} sx={styles.bio(expanded)}>
-              • Гарантия помощи с трудоустройством в ведущие IT-компании •
-              Выпускники зарабатывают от 45к евро БЕСПЛАТНАЯ • Гарантия помощи с
-              трудоустройством в ведущие IT-компании • Выпускники зарабатывают
-              от 45к евро БЕСПЛАТНАЯ • Гарантия помощи с трудоустройством в
-              ведущие IT-компании • Выпускники зарабатывают от 45к евро
-              БЕСПЛАТНАЯ • Гарантия помощи с трудоустройством в ведущие
-              IT-компании • Выпускники зарабатывают от 45к евро БЕСПЛАТНАЯ •
-              Гарантия помощи с трудоустройством в ведущие IT-компании •
-              Выпускники зарабатывают от 45к евро БЕСПЛАТНАЯ • Гарантия помощи с
-              трудоустройством в ведущие IT-компании • Выпускники зарабатывают
-              от 45к евро БЕСПЛАТНАЯ • Гарантия помощи с трудоустройством в
-              ведущие IT-компании • Выпускники зарабатывают от 45к евро
-              БЕСПЛАТНАЯ • Гарантия помощи с трудоустройством в ведущие
-              IT-компании • Выпускники зарабатывают от 45к евро БЕСПЛАТНАЯ
-            </Typography>
+            {user.bio && (
+              <Typography ref={textRef} sx={styles.bio(expanded)}>
+                {user.bio}
+              </Typography>
+            )}
 
             {isOverflowing && (
               <Button
@@ -98,53 +167,60 @@ function MyProfile() {
                 {expanded ? "less" : "more"}
               </Button>
             )}
-            <Box
-              sx={{
-                display: "flex",
-                gap: "7px",
-                alignItems: "center",
-              }}
-            >
+
+            {website && (
               <Box
-                component="img"
-                src={linkWebImg}
-                alt="linkWebImg"
-                sx={{
-                  width: "12px",
-                  height: "12px",
-                }}
-              ></Box>
-              <Typography
-                sx={{
-                  fontWeight: 600,
-                  fontSize: "14px",
-                  lineHeight: "129%",
-                  color: "#00376b",
-                }}
+                component={websiteHref ? "a" : "div"}
+                href={websiteHref || undefined}
+                target={websiteHref ? "_blank" : undefined}
+                rel={websiteHref ? "noopener noreferrer" : undefined}
+                sx={styles.websiteContainer}
               >
-                bit.ly/3rpiIbh
-              </Typography>
-            </Box>
+                <Box
+                  component="img"
+                  src={linkWebImg}
+                  alt="linkWebImg"
+                  sx={styles.websiteIcon}
+                />
+
+                <Typography sx={styles.websiteText}>
+                  {website.replace(/^https?:\/\//i, "")}
+                </Typography>
+              </Box>
+            )}
           </Box>
         </Box>
       </Box>
 
       <Box sx={styles.postsGrid}>
-        {Array.from({ length: 18 }, (_, index) => (
-          <Box
-            key={index}
-            component="img"
-            src={testImage}
-            alt="itchgram"
-            onClick={() => setOpenPost(true)}
-            sx={styles.postImage}
-          />
-        ))}
+        {posts.map((post) =>
+          post.image ? (
+            <Box
+              key={post._id}
+              component="img"
+              src={post.image}
+              alt={post.description || "Post"}
+              onClick={() => setSelectedPost(post)}
+              sx={styles.postImage}
+            />
+          ) : (
+            <Box
+              key={post._id}
+              component="video"
+              src={post.video}
+              muted
+              playsInline
+              preload="metadata"
+              onClick={() => setSelectedPost(post)}
+              sx={styles.postImage}
+            />
+          ),
+        )}
       </Box>
 
-      <Modal open={openPost} onClose={() => setOpenPost(false)}>
+      <Modal open={Boolean(selectedPost)} onClose={() => setSelectedPost(null)}>
         <Box sx={styles.modalContent}>
-          <MyPostModal />
+          {selectedPost && <MyPostModal post={selectedPost} />}
         </Box>
       </Modal>
     </Box>

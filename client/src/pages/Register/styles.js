@@ -18,6 +18,28 @@ export const styles = {
     maxWidth: "350px",
   },
 
+  fieldGroup: {
+    display: "flex",
+    flexDirection: "column",
+    width: "100%",
+    gap: "4px",
+  },
+
+  fieldError: {
+    fontWeight: 400,
+    fontSize: "12px",
+    lineHeight: "129%",
+    color: "#ff0000",
+  },
+
+  formError: {
+    fontWeight: 400,
+    fontSize: "12px",
+    lineHeight: "129%",
+    textAlign: "center",
+    color: "#ed4956",
+  },
+
   registerCard: {
     display: "flex",
     flexDirection: "column",
