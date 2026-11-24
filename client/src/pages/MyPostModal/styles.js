@@ -9,9 +9,40 @@ export const styles = {
     paddingTop: "47px",
   },
 
+  copyStatus: {
+    fontWeight: 400,
+    fontSize: "11px",
+    lineHeight: "129%",
+    color: "#737373",
+    padding: "8px 13px",
+  },
+
+  activeLikeIcon: {
+    width: "20.34px",
+    height: "20.34px",
+    color: "#ff3040",
+  },
+
+  likeError: {
+    fontWeight: 400,
+    fontSize: "10px",
+    lineHeight: "133%",
+    color: "#ed4956",
+  },
+
+  deleteError: {
+    fontWeight: 400,
+    fontSize: "11px",
+    lineHeight: "129%",
+    color: "#ed4956",
+    padding: "8px 13px",
+  },
+
   postImage: {
     width: "577px",
     height: "722px",
+    objectFit: "cover",
+    objectPosition: "center",
   },
 
   rightColumn: {

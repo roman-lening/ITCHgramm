@@ -15,19 +15,15 @@ function EditPost({
       <Button sx={styles.deleteButton} onClick={onDelete}>
         Delete
       </Button>
-
       <Button sx={styles.button} onClick={onEdit}>
         Edit
       </Button>
-
       <Button sx={styles.button} onClick={onGoToPost}>
         Go to post
       </Button>
-
       <Button sx={styles.button} onClick={onCopyLink}>
         Copy link
       </Button>
-
       <Button sx={styles.cancelButton} onClick={onCancel}>
         Cancel
       </Button>

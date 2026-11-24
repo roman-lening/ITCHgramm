@@ -16,6 +16,18 @@ export const styles = {
     paddingBottom: "16px",
   },
 
+  activeLikeIcon: {
+    width: "20.67px",
+    height: "20.67px",
+    color: "#ff3040",
+  },
+
+  likeError: {
+    fontSize: "11px",
+    lineHeight: "129%",
+    color: "#ed4956",
+  },
+
   header: {
     display: "flex",
     alignItems: "center",
@@ -38,6 +50,7 @@ export const styles = {
     height: "27px",
     objectFit: "cover",
     flexShrink: 0,
+    borderRadius: "50%",
   },
 
   username: {

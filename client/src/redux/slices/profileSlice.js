@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 import { logout } from "./authSlice.js";
+import { deletePost, likePost, unlikePost } from "./postsSlice.js";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -28,6 +29,20 @@ export const getMyProfile = createAsyncThunk(
     }
   },
 );
+
+const removePostFromProfile = (profile, postId) => {
+  if (!profile?.posts) return;
+
+  const updatedPosts = profile.posts.filter((post) => post._id !== postId);
+
+  if (updatedPosts.length === profile.posts.length) return;
+
+  profile.posts = updatedPosts;
+
+  if (profile.user) {
+    profile.user.postsCount = updatedPosts.length;
+  }
+};
 
 export const getOtherProfile = createAsyncThunk(
   "profile/getOtherProfile",
@@ -104,6 +119,20 @@ const initialState = {
   message: null,
 };
 
+const updateProfileLikesCount = (state, postId, change) => {
+  const profiles = [state.myProfile, state.otherProfile];
+
+  profiles.forEach((profile) => {
+    const post = profile?.posts?.find((item) => item._id === postId);
+
+    if (!post) return;
+
+    if (typeof post.likesCount === "number") {
+      post.likesCount = Math.max(0, post.likesCount + change);
+    }
+  });
+};
+
 const profileSlice = createSlice({
   name: "profile",
   initialState,
@@ -169,6 +198,21 @@ const profileSlice = createSlice({
         state.saving = false;
         state.saveError = action.payload;
       })
+
+      .addCase(deletePost.fulfilled, (state, action) => {
+        const postId = action.payload.postId;
+        removePostFromProfile(state.myProfile, postId);
+        removePostFromProfile(state.otherProfile, postId);
+      })
+
+      .addCase(likePost.fulfilled, (state, action) => {
+        updateProfileLikesCount(state, action.payload, 1);
+      })
+
+      .addCase(unlikePost.fulfilled, (state, action) => {
+        updateProfileLikesCount(state, action.payload, -1);
+      })
+
       .addCase(logout, () => initialState);
   },
 });

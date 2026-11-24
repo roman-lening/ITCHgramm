@@ -115,6 +115,10 @@ export const styles = {
     width: "114px",
   },
 
+  fileInput: {
+    display: "none",
+  },
+
   form: {
     display: "flex",
     flexDirection: "column",
@@ -137,10 +141,12 @@ export const styles = {
     width: "10px",
     height: "10px",
   },
+
   aboutContainer: {
     position: "relative",
     width: "610px",
   },
+
   aboutInput: {
     width: "100%",
     background: "#fff",
@@ -162,6 +168,7 @@ export const styles = {
       overflowY: "auto !important",
     },
   },
+
   aboutCounter: {
     position: "absolute",
     right: "12px",
@@ -171,9 +178,24 @@ export const styles = {
     color: "#737373",
     pointerEvents: "none",
   },
+
   saveButton: {
     ...blueButton,
     width: "268px",
     marginTop: "46px",
+  },
+
+  fieldError: {
+    fontWeight: 400,
+    fontSize: "12px",
+    lineHeight: "129%",
+    color: "#ed4956",
+  },
+
+  statusText: {
+    fontWeight: 400,
+    fontSize: "14px",
+    lineHeight: "129%",
+    color: "#737373",
   },
 };

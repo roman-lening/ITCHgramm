@@ -8,6 +8,7 @@ import { useDispatch, useSelector } from "react-redux";
 
 import itchgram from "../../assets/itchgram.png";
 import linkWebImg from "../../assets/linkWeb.svg";
+
 import MyPostModal from "../MyPostModal/index.jsx";
 import { getMyProfile } from "../../redux/slices/profileSlice.js";
 import { styles } from "./styles";
@@ -55,10 +56,7 @@ function MyProfile() {
   useEffect(() => {
     const element = textRef.current;
 
-    if (!element) {
-      setIsOverflowing(false);
-      return;
-    }
+    if (!element) return;
 
     const checkOverflow = () => {
       setIsOverflowing(element.scrollHeight > 52);
@@ -159,7 +157,7 @@ function MyProfile() {
               </Typography>
             )}
 
-            {isOverflowing && (
+            {Boolean(user.bio) && isOverflowing && (
               <Button
                 onClick={() => setExpanded((prev) => !prev)}
                 sx={styles.moreButton}
@@ -203,7 +201,7 @@ function MyProfile() {
               onClick={() => setSelectedPost(post)}
               sx={styles.postImage}
             />
-          ) : (
+          ) : post.video ? (
             <Box
               key={post._id}
               component="video"
@@ -214,13 +212,18 @@ function MyProfile() {
               onClick={() => setSelectedPost(post)}
               sx={styles.postImage}
             />
-          ),
+          ) : null,
         )}
       </Box>
 
       <Modal open={Boolean(selectedPost)} onClose={() => setSelectedPost(null)}>
         <Box sx={styles.modalContent}>
-          {selectedPost && <MyPostModal post={selectedPost} />}
+          {selectedPost && (
+            <MyPostModal
+              post={selectedPost}
+              onClose={() => setSelectedPost(null)}
+            />
+          )}
         </Box>
       </Modal>
     </Box>

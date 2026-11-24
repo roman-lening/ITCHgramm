@@ -1,4 +1,3 @@
-
 export const styles = {
   container: {
     display: "flex",
@@ -10,9 +9,32 @@ export const styles = {
     paddingTop: "47px",
   },
 
+  activeLikeIcon: {
+    width: "20.34px",
+    height: "20.34px",
+    color: "#ff3040",
+  },
+
+  likeError: {
+    fontWeight: 400,
+    fontSize: "10px",
+    lineHeight: "133%",
+    color: "#ed4956",
+  },
+
+  followError: {
+    fontWeight: 400,
+    fontSize: "10px",
+    lineHeight: "133%",
+    color: "#ed4956",
+    paddingLeft: "13px",
+  },
+
   postImage: {
     width: "577px",
     height: "722px",
+    objectFit: "cover",
+    objectPosition: "center",
   },
 
   rightColumn: {
@@ -24,7 +46,7 @@ export const styles = {
     borderLeft: "0.85px solid #efefef",
     borderRadius: "0 3px 3px 0",
     paddingRight: "11px",
-    background: "white"
+    background: "white",
   },
 
   topSection: {
@@ -275,6 +297,6 @@ export const styles = {
     lineHeight: "129%",
     textAlign: "center",
     color: "#0095f6",
-    textTransform: "none"
+    textTransform: "none",
   },
 };

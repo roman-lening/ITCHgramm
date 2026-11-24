@@ -3,20 +3,66 @@ import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import Modal from "@mui/material/Modal";
 import itchgram from "../../assets/itchgram.png";
-import testImage from "../../assets/TestImagePost.svg";
-import { useState, useRef, useEffect } from "react";
-import OtherPostModal from "../OtherPostModal/index.jsx";
-import { styles } from "./styles";
 import linkWebImg from "../../assets/linkWeb.svg";
+import { useState, useRef, useEffect } from "react";
+import { useParams } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import OtherPostModal from "../OtherPostModal/index.jsx";
+import { getOtherProfile } from "../../redux/slices/profileSlice.js";
+import {
+  getFollowing,
+  followUser,
+  unfollowUser,
+} from "../../redux/slices/followSlice.js";
+import { styles } from "./styles";
 
 function OtherProfile() {
+  const { username } = useParams();
+  const dispatch = useDispatch();
+
+  const { otherProfile, loading, error } = useSelector(
+    (state) => state.profile,
+  );
+
+  const currentUserId = useSelector((state) => state.auth.userId);
+
+  const {
+    followingIds,
+    pendingIds,
+    loaded: followingLoaded,
+    error: followingError,
+  } = useSelector((state) => state.follow);
+
   const [expanded, setExpanded] = useState(false);
   const [isOverflowing, setIsOverflowing] = useState(false);
-  const [openPost, setOpenPost] = useState(false);
+  const [selectedPost, setSelectedPost] = useState(null);
+  const [followError, setFollowError] = useState(null);
+
   const textRef = useRef(null);
 
+  const user = otherProfile?.user;
+  const posts = otherProfile?.posts ?? [];
+
+  const userId = user?.id ?? user?._id;
+
+  const isOwnProfile = userId === currentUserId;
+  const isFollowing = followingIds.includes(userId);
+  const followBusy = pendingIds.includes(userId);
+
   useEffect(() => {
-    if (!openPost) return;
+    if (!username) return;
+
+    dispatch(getOtherProfile(username));
+  }, [dispatch, username]);
+
+  useEffect(() => {
+    if (!followingLoaded) {
+      dispatch(getFollowing());
+    }
+  }, [dispatch, followingLoaded]);
+
+  useEffect(() => {
+    if (!selectedPost) return;
 
     const handleOutsideClick = (event) => {
       const isInsidePost =
@@ -26,7 +72,7 @@ function OtherProfile() {
       if (!isInsidePost) {
         event.stopPropagation();
         event.preventDefault();
-        setOpenPost(false);
+        setSelectedPost(null);
       }
     };
 
@@ -35,65 +81,147 @@ function OtherProfile() {
     return () => {
       document.removeEventListener("click", handleOutsideClick, true);
     };
-  }, [openPost]);
+  }, [selectedPost]);
 
   useEffect(() => {
     const element = textRef.current;
-    if (!element) return;
+
+    if (!element) {
+      setIsOverflowing(false);
+      return;
+    }
 
     const checkOverflow = () => {
       setIsOverflowing(element.scrollHeight > 52);
     };
 
     const observer = new ResizeObserver(checkOverflow);
+
     observer.observe(element);
     checkOverflow();
 
     return () => observer.disconnect();
-  }, []);
+  }, [user?.bio]);
+
+  const handleFollow = async () => {
+    if (!userId || isOwnProfile || !followingLoaded || followBusy) {
+      return;
+    }
+
+    setFollowError(null);
+
+    const userData = {
+      username: user.username,
+      userId,
+    };
+
+    try {
+      if (isFollowing) {
+        await dispatch(unfollowUser(userData)).unwrap();
+      } else {
+        await dispatch(followUser(userData)).unwrap();
+      }
+    } catch (error) {
+      setFollowError({
+        userId,
+        message: typeof error === "string" ? error : "Failed to update follow",
+      });
+    }
+  };
+
+  if (loading && !otherProfile) {
+    return (
+      <Box sx={styles.container}>
+        <Typography sx={styles.statusText}>Loading profile...</Typography>
+      </Box>
+    );
+  }
+
+  if (error && !otherProfile) {
+    return (
+      <Box sx={styles.container}>
+        <Typography sx={styles.statusText}>{error}</Typography>
+      </Box>
+    );
+  }
+
+  if (!user) {
+    return (
+      <Box sx={styles.container}>
+        <Typography sx={styles.statusText}>Profile not found.</Typography>
+      </Box>
+    );
+  }
+
+  const website = user.website?.trim() ?? "";
+
+  const websiteHref = (() => {
+    if (!website) return null;
+
+    try {
+      const url = new URL(
+        /^https?:\/\//i.test(website) ? website : `https://${website}`,
+      );
+
+      return ["http:", "https:"].includes(url.protocol) ? url.href : null;
+    } catch {
+      return null;
+    }
+  })();
+
+  const formatCount = (value) =>
+    new Intl.NumberFormat("ru-RU").format(value ?? 0);
 
   return (
     <Box sx={styles.container}>
       <Box sx={styles.header}>
-        <Box component="img" src={itchgram} alt="itchgram" sx={styles.avatar} />
-
+        <Box
+          component="img"
+          src={user.avatarUrl || itchgram}
+          alt={user.username}
+          sx={styles.avatar}
+        />
         <Box sx={styles.profileInfo}>
           <Box sx={styles.profileActions}>
-            <Typography sx={styles.username}>username</Typography>
-
+            <Typography sx={styles.username}>{user.username}</Typography>
             <Box sx={styles.buttons}>
-              <Button sx={styles.followButton}>Follow</Button>
-
+              {!isOwnProfile && (
+                <Button
+                  onClick={handleFollow}
+                  disabled={!followingLoaded || followBusy}
+                  sx={styles.followButton}
+                >
+                  {isFollowing ? "Unfollow" : "Follow"}
+                </Button>
+              )}
               <Button sx={styles.messageButton}>Message</Button>
             </Box>
           </Box>
-
-          <Box sx={styles.statistics}>
-            <Typography sx={styles.postsCount}>129 posts</Typography>
-
-            <Typography sx={styles.statText}>9 993 followers</Typography>
-
-            <Typography sx={styles.statText}>59 following</Typography>
-          </Box>
-
-          <Box sx={styles.bioContainer}>
-            <Typography ref={textRef} sx={styles.bio(expanded)}>
-              • Гарантия помощи с трудоустройством в ведущие IT-компании •
-              Выпускники зарабатывают от 45к евро БЕСПЛАТНАЯ • Гарантия помощи с
-              трудоустройством в ведущие IT-компании • Выпускники зарабатывают
-              от 45к евро БЕСПЛАТНАЯ • Гарантия помощи с трудоустройством в
-              ведущие IT-компании • Выпускники зарабатывают от 45к евро
-              БЕСПЛАТНАЯ • Гарантия помощи с трудоустройством в ведущие
-              IT-компании • Выпускники зарабатывают от 45к евро БЕСПЛАТНАЯ •
-              Гарантия помощи с трудоустройством в ведущие IT-компании •
-              Выпускники зарабатывают от 45к евро БЕСПЛАТНАЯ • Гарантия помощи с
-              трудоустройством в ведущие IT-компании • Выпускники зарабатывают
-              от 45к евро БЕСПЛАТНАЯ • Гарантия помощи с трудоустройством в
-              ведущие IT-компании • Выпускники зарабатывают от 45к евро
-              БЕСПЛАТНАЯ • Гарантия помощи с трудоустройством в ведущие
-              IT-компании • Выпускники зарабатывают от 45к евро БЕСПЛАТНАЯ
+          {followError?.userId === userId && (
+            <Typography sx={styles.statusText}>
+              {followError.message}
             </Typography>
-
+          )}
+          {!followingLoaded && followingError && (
+            <Typography sx={styles.statusText}>{followingError}</Typography>
+          )}
+          <Box sx={styles.statistics}>
+            <Typography sx={styles.postsCount}>
+              {formatCount(user.postsCount ?? posts.length)} posts
+            </Typography>
+            <Typography sx={styles.statText}>
+              {formatCount(user.followersCount)} followers
+            </Typography>
+            <Typography sx={styles.statText}>
+              {formatCount(user.followingCount)} following
+            </Typography>
+          </Box>
+          <Box sx={styles.bioContainer}>
+            {user.bio && (
+              <Typography ref={textRef} sx={styles.bio(expanded)}>
+                {user.bio}
+              </Typography>
+            )}
             {isOverflowing && (
               <Button
                 onClick={() => setExpanded((prev) => !prev)}
@@ -102,53 +230,56 @@ function OtherProfile() {
                 {expanded ? "less" : "more"}
               </Button>
             )}
-             <Box
-        sx={{
-          display: "flex",
-          gap: "7px",
-          alignItems: "center",
-        }}
-      >
-        <Box
-          component="img"
-          src={linkWebImg}
-          alt="linkWebImg"
-          sx={{
-            width: "12px",
-            height: "12px",
-          }}
-        ></Box>
-        <Typography
-          sx={{
-            fontWeight: 600,
-            fontSize: "14px",
-            lineHeight: "129%",
-            color: "#00376b",
-          }}
-        >
-          bit.ly/3rpiIbh
-        </Typography>
-      </Box>
+            {website && (
+              <Box
+                component={websiteHref ? "a" : "div"}
+                href={websiteHref || undefined}
+                target={websiteHref ? "_blank" : undefined}
+                rel={websiteHref ? "noopener noreferrer" : undefined}
+                sx={styles.websiteContainer}
+              >
+                <Box
+                  component="img"
+                  src={linkWebImg}
+                  alt=""
+                  sx={styles.websiteIcon}
+                />
+                <Typography sx={styles.websiteText}>
+                  {website.replace(/^https?:\/\//i, "")}
+                </Typography>
+              </Box>
+            )}
           </Box>
         </Box>
       </Box>
-
       <Box sx={styles.postsGrid}>
-        {Array.from({ length: 18 }, (_, index) => (
-          <Box
-            key={index}
-            component="img"
-            src={testImage}
-            alt="itchgram"
-            onClick={() => setOpenPost(true)}
-            sx={styles.postImage}
-          />
-        ))}
+        {posts.map((post) =>
+          post.image ? (
+            <Box
+              key={post._id}
+              component="img"
+              src={post.image}
+              alt={post.description || "Post"}
+              onClick={() => setSelectedPost(post)}
+              sx={styles.postImage}
+            />
+          ) : post.video ? (
+            <Box
+              key={post._id}
+              component="video"
+              src={post.video}
+              muted
+              playsInline
+              preload="metadata"
+              onClick={() => setSelectedPost(post)}
+              sx={styles.postImage}
+            />
+          ) : null,
+        )}
       </Box>
-     
-      <Modal open={openPost} onClose={() => setOpenPost(false)}>
+      <Modal open={Boolean(selectedPost)} onClose={() => setSelectedPost(null)}>
         <Box sx={styles.modalContent}>
-          <OtherPostModal />
+          {selectedPost && <OtherPostModal post={selectedPost} user={user} />}
         </Box>
       </Modal>
     </Box>

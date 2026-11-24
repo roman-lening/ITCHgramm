@@ -11,7 +11,7 @@ export const styles = {
     height: "1280px",
     paddingTop: "89px",
     paddingBottom: "89px",
- paddingLeft: "123px",
+    paddingLeft: "123px",
     minHeight: 0,
     overflowY: "auto",
     overscrollBehavior: "contain",
@@ -28,5 +28,13 @@ export const styles = {
   modalContent: {
     width: "100%",
     margin: "0 auto",
+  },
+
+  statusText: {
+    gridColumn: "1 / -1",
+    fontWeight: 400,
+    fontSize: "14px",
+    lineHeight: "129%",
+    color: "#737373",
   },
 };

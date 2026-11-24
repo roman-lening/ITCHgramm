@@ -15,6 +15,7 @@ export const styles = {
     gap: "15px",
     width: "100%",
     margin: "0 auto",
+    marginTop: "93px",
     maxWidth: "350px",
   },
 
