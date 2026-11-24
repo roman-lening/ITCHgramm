@@ -1,35 +1,49 @@
-
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import { NavLink } from "react-router-dom";
 import { styles } from "./styles";
 
-function Footer() {
+function Footer({ onOpenSearch, onNavigate }) {
+  const inactiveLink = {
+    ...styles.link,
+    cursor: "default",
+  };
+
+  const searchButton = {
+    ...styles.link,
+    padding: 0,
+    margin: 0,
+    border: "none",
+    background: "transparent",
+    fontFamily: "inherit",
+    textTransform: "none",
+    textDecoration: "none",
+  };
+
   return (
     <Box sx={styles.footer}>
       <Box sx={styles.navigation}>
-        <NavLink to="" style={styles.link}>
+        <NavLink to="/home" onClick={onNavigate} style={styles.link}>
           Home
         </NavLink>
-        <NavLink to="" style={styles.link}>
+        <Box
+          component="button"
+          type="button"
+          onClick={onOpenSearch}
+          sx={searchButton}
+        >
           Search
-        </NavLink>
-        <NavLink to="" style={styles.link}>
+        </Box>
+        <NavLink to="/explore" onClick={onNavigate} style={styles.link}>
           Explore
         </NavLink>
-        <NavLink to="" style={styles.link}>
-          Messages
-        </NavLink>
-        <NavLink to="" style={styles.link}>
-          Notificaitons
-        </NavLink>
-        <NavLink to="" style={styles.link}>
+        <Typography sx={inactiveLink}>Messages</Typography>
+        <Typography sx={inactiveLink}>Notifications</Typography>
+        <NavLink to="/add-post" onClick={onNavigate} style={styles.link}>
           Create
         </NavLink>
       </Box>
-      <Typography sx={styles.copyright}>
-        © 2026 ITCHgram
-      </Typography>
+      <Typography sx={styles.copyright}>© 2026 ITCHgram</Typography>
     </Box>
   );
 }

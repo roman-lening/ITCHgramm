@@ -14,6 +14,7 @@ import Explore from "./pages/Explore";
 import EditProfile from "./pages/EditProfile";
 import AddPost from "./pages/AddPost";
 import Error from "./pages/Error";
+import { useState } from "react";
 
 function ProtectedRoute({ children }) {
   const token = useSelector((state) => state.auth.token);
@@ -28,11 +29,16 @@ function StartPage() {
 }
 
 function AppLayout() {
+  const [openSearch, setOpenSearch] = useState(false);
+
   return (
     <Box>
-      <Drawerr />
+      <Drawerr openSearch={openSearch} setOpenSearch={setOpenSearch} />
       <Outlet />
-      <Footer />
+      <Footer
+        onOpenSearch={() => setOpenSearch(true)}
+        onNavigate={() => setOpenSearch(false)}
+      />
     </Box>
   );
 }

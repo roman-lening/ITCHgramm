@@ -5,26 +5,21 @@ import List from "@mui/material/List";
 import InputBase from "@mui/material/InputBase";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
-
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-
 import itchgram from "../../assets/itchgram.png";
 import { styles } from "./styles";
-
 import homeLight from "../../assets/DrawerSvg/Light/Home.svg";
 import searchLight from "../../assets/DrawerSvg/Light/Search.svg";
 import exploreLight from "../../assets/DrawerSvg/Light/Explore.svg";
 import messageLight from "../../assets/DrawerSvg/Light/Message.svg";
 import notificationLight from "../../assets/DrawerSvg/Light/Notification.svg";
 import create from "../../assets/DrawerSvg/Light/Create.svg";
-
 import homeDark from "../../assets/DrawerSvg/Dark/Home.svg";
 import searchDark from "../../assets/DrawerSvg/Dark/Search.svg";
 import exploreDark from "../../assets/DrawerSvg/Dark/Explore.svg";
 import messageDark from "../../assets/DrawerSvg/Dark/Message.svg";
 import notificationDark from "../../assets/DrawerSvg/Dark/Notification.svg";
-
 import { searchUsers, clearSearch } from "../../redux/slices/searchSlice.js";
 
 const searchInputStyles = {
@@ -100,7 +95,7 @@ const resultFullnameStyles = {
   color: "#737373",
 };
 
-function Drawerr() {
+function Drawerr({ openSearch, setOpenSearch }) {
   const dispatch = useDispatch();
   const location = useLocation();
 
@@ -109,7 +104,6 @@ function Drawerr() {
   const { users, query, loading, error } = useSelector((state) => state.search);
 
   const [isNotification, setIsNotification] = useState(true);
-  const [openSearch, setOpenSearch] = useState(false);
   const [openMessage, setOpenMessage] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [recentUsers, setRecentUsers] = useState([]);
@@ -290,9 +284,13 @@ function Drawerr() {
             </Typography>
           </Button>
 
-          <Button sx={styles.item}>
+          <Button
+            component={NavLink}
+            to="/add-post"
+            onClick={closePanels}
+            sx={styles.item}
+          >
             <Box component="img" src={create} alt="create" sx={styles.icon} />
-
             <Typography sx={styles.text(400)}>Create</Typography>
           </Button>
         </List>
