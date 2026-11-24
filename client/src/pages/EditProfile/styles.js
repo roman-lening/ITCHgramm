@@ -66,8 +66,7 @@ export const styles = {
     alignItems: "center",
     borderRadius: "20px",
     background: "#efefef",
-    paddingLeft: "16px",
-    paddingRight: "16px",
+    padding: "16px",
   },
 
   profileInfo: {
@@ -87,8 +86,8 @@ export const styles = {
     display: "flex",
     flexDirection: "column",
     gap: "9px",
-    paddingTop: "16px",
-    paddingBottom: "8px",
+    alignItems: "flex-start",
+    justifyContent: "center",
     width: "270px",
   },
 

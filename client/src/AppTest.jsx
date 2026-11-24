@@ -32,13 +32,34 @@ function AppLayout() {
   const [openSearch, setOpenSearch] = useState(false);
 
   return (
-    <Box>
-      <Drawerr openSearch={openSearch} setOpenSearch={setOpenSearch} />
-      <Outlet />
-      <Footer
-        onOpenSearch={() => setOpenSearch(true)}
-        onNavigate={() => setOpenSearch(false)}
-      />
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        minHeight: "100dvh",
+      }}
+    >
+      <Drawerr openSearch={openSearch} setOpenSearch={setOpenSearch} />тут
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          minHeight: 0,
+        }}
+      >
+        <Outlet />
+      </Box>
+      <Box
+        sx={{
+          marginLeft: "245px",
+          width: "calc(100% - 245px)",
+        }}
+      >
+        <Footer
+          onOpenSearch={() => setOpenSearch(true)}
+          onNavigate={() => setOpenSearch(false)}
+        />
+      </Box>
     </Box>
   );
 }
