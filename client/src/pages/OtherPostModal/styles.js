@@ -48,6 +48,7 @@ export const styles = {
     paddingRight: "11px",
     background: "white",
     paddingTop: "12px",
+    width: "422px",
   },
 
   topSection: {

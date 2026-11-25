@@ -55,7 +55,8 @@ export const styles = {
     borderRadius: "0 3px 3px 0",
     paddingRight: "11px",
     background: "white",
-
+    paddingTop: "12px",
+    width: "422px",
   },
 
   topSection: {
@@ -93,7 +94,6 @@ export const styles = {
     height: "27px",
     border: "1px solid black",
     borderRadius: "50%",
-    
   },
 
   headerInfo: {
@@ -218,7 +218,6 @@ export const styles = {
     display: "flex",
     justifyContent: "flex-start",
     gap: "7px",
-
   },
 
   commentDetails: {
