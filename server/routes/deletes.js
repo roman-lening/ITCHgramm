@@ -3,6 +3,8 @@ import bcrypt from "bcrypt";
 import User from "../modules/User.js";
 import Post from "../modules/Post.js";
 import Like from "../modules/Like.js";
+import Comment from "../modules/Comment.js";
+import CommentLike from "../modules/CommentLike.js";
 import mongoose from "mongoose";
 import authMiddleware from "../middleware/authMiddleware.js";
 import { uploadPost, uploadAvatar } from "../middleware/upload.js";
@@ -101,6 +103,52 @@ router.delete("/users/:username/follow", authMiddleware, async (req, res) => {
   }
 });
 
+router.delete("/comments/:id/like", authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.isObjectIdOrHexString(id)) {
+      return res.status(400).json({
+        message: "Invalid comment ID",
+      });
+    }
+
+    const comment = await Comment.exists({ _id: id });
+
+    if (!comment) {
+      return res.status(404).json({
+        message: "Comment not found",
+      });
+    }
+
+    const deletedLike = await CommentLike.findOneAndDelete({
+      author: req.userId,
+      comment: id,
+    });
+
+    if (!deletedLike) {
+      return res.status(404).json({
+        message: "Comment like not found",
+      });
+    }
+
+    const likesCount = await CommentLike.countDocuments({
+      comment: id,
+    });
+
+    return res.status(200).json({
+      message: "Comment like successfully removed",
+      likesCount,
+      isLiked: false,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+});
+
 router.delete("/profile", authMiddleware, async (req, res) => {
   try {
     const { password } = req.body ?? {};
@@ -109,59 +157,91 @@ router.delete("/profile", authMiddleware, async (req, res) => {
         message: "Password is required",
       });
     }
+
     const user = await User.findById(req.userId).select("+password");
     if (!user) {
       return res.status(404).json({
         message: "User not found",
       });
     }
+
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       return res.status(401).json({
         message: "Invalid password",
       });
     }
+
     const mediaToDelete = await mongoose.connection.transaction(
       async (session) => {
         const posts = await Post.find({ author: user._id })
           .select("_id imagePublicId videoPublicId")
           .session(session);
+
         const media = [
           { publicId: user.avatarPublicId, resourceType: "image" },
           ...posts.flatMap(postMedia),
         ];
+
         const postIds = posts.map((post) => post._id);
-        await Like.deleteMany(
+
+        const comments = await Comment.find({
+          $or: [{ author: user._id }, { post: { $in: postIds } }],
+        })
+          .select("_id")
+          .session(session);
+
+        const commentIds = comments.map((comment) => comment._id);
+
+        await CommentLike.deleteMany(
           {
-            $or: [
-              { author: user._id },
-              { post: { $in: postIds } },
-            ],
+            $or: [{ author: user._id }, { comment: { $in: commentIds } }],
           },
           { session },
         );
+
+        await Comment.deleteMany(
+          {
+            $or: [{ author: user._id }, { post: { $in: postIds } }],
+          },
+          { session },
+        );
+
+        await Like.deleteMany(
+          {
+            $or: [{ author: user._id }, { post: { $in: postIds } }],
+          },
+          { session },
+        );
+
         await Post.deleteMany({ author: user._id }, { session });
+
         await User.updateMany(
           { followers: user._id },
           { $pull: { followers: user._id } },
           { session },
         );
+
         await User.updateMany(
           { following: user._id },
           { $pull: { following: user._id } },
           { session },
         );
-        const deletedUser = await User.findByIdAndDelete(
-          user._id,
-          { session },
-        );
+
+        const deletedUser = await User.findByIdAndDelete(user._id, {
+          session,
+        });
+
         if (!deletedUser) {
           throw new Error("USER_NOT_FOUND");
         }
+
         return media;
       },
     );
+
     await removeMedia(mediaToDelete);
+
     return res.status(200).json({
       message: "Account permanently deleted",
     });
@@ -171,6 +251,7 @@ router.delete("/profile", authMiddleware, async (req, res) => {
         message: "User not found",
       });
     }
+
     console.error(error);
     return res.status(500).json({
       message: "Internal server error",
@@ -178,15 +259,19 @@ router.delete("/profile", authMiddleware, async (req, res) => {
   }
 });
 
+
 router.delete("/posts/:id", authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
+
     if (!mongoose.isObjectIdOrHexString(id)) {
       return res.status(400).json({
         message: "Invalid post ID",
       });
     }
+
     let deletedPost;
+
     await mongoose.connection.transaction(async (session) => {
       deletedPost = await Post.findOneAndDelete(
         {
@@ -195,17 +280,35 @@ router.delete("/posts/:id", authMiddleware, async (req, res) => {
         },
         { session },
       );
+
       if (!deletedPost) {
         return;
       }
+
+      const comments = await Comment.find({ post: id })
+        .select("_id")
+        .session(session);
+
+      const commentIds = comments.map((comment) => comment._id);
+
+      await CommentLike.deleteMany(
+        { comment: { $in: commentIds } },
+        { session },
+      );
+
+      await Comment.deleteMany({ post: id }, { session });
+
       await Like.deleteMany({ post: id }, { session });
     });
+
     if (!deletedPost) {
       return res.status(404).json({
         message: "Post not found",
       });
     }
+
     await removeMedia(postMedia(deletedPost));
+
     return res.status(200).json({
       message: "Post successfully deleted",
     });

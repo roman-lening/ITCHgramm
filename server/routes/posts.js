@@ -4,6 +4,8 @@ import jwt from "jsonwebtoken";
 import User from "../modules/User.js";
 import mongoose from "mongoose";
 import Like from "../modules/Like.js";
+import CommentLike from "../modules/CommentLike.js";
+import Comment from "../modules/Comment.js";
 import authMiddleware from "../middleware/authMiddleware.js";
 import Post from "../modules/Post.js";
 import { uploadPost, uploadAvatar } from "../middleware/upload.js";
@@ -12,7 +14,10 @@ import {
   uploadToCloudinary,
   deleteFromCloudinary,
 } from "../utils/cloudinaryMedia.js";
-import { sendPasswordResetEmail, sendWelcomeEmail } from "../utils/sendEmail.js";
+import {
+  sendPasswordResetEmail,
+  sendWelcomeEmail,
+} from "../utils/sendEmail.js";
 import crypto from "node:crypto";
 import {
   forgotPasswordLimiter,
@@ -148,9 +153,7 @@ router.post("/login", async (req, res) => {
       });
     }
     const identifier =
-      typeof email === "string" && email.trim()
-        ? email
-        : username;
+      typeof email === "string" && email.trim() ? email : username;
     if (typeof identifier !== "string" || !identifier.trim()) {
       return res.status(400).json({
         message: "Username or email is required",
@@ -402,6 +405,115 @@ router.post("/forgot-password", forgotPasswordLimiter, async (req, res) => {
       );
     }
     return res.status(200).json(successMessage);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+});
+
+router.post("/posts/:id/comments", authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { text } = req.body ?? {};
+
+    if (!mongoose.isObjectIdOrHexString(id)) {
+      return res.status(400).json({
+        message: "Invalid post ID",
+      });
+    }
+
+    if (typeof text !== "string" || !text.trim() || text.trim().length > 500) {
+      return res.status(400).json({
+        message: "Comment must contain 1-500 characters",
+      });
+    }
+
+    const post = await Post.exists({ _id: id });
+
+    if (!post) {
+      return res.status(404).json({
+        message: "Post not found",
+      });
+    }
+
+    const comment = await Comment.create({
+      post: id,
+      author: req.userId,
+      text: text.trim(),
+    });
+
+    await comment.populate("author", "username fullname avatarUrl");
+
+    return res.status(201).json({
+      message: "Comment successfully created",
+      comment: {
+        ...comment.toObject(),
+        likesCount: 0,
+        isLiked: false,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+});
+
+router.post("/comments/:id/like", authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.isObjectIdOrHexString(id)) {
+      return res.status(400).json({
+        message: "Invalid comment ID",
+      });
+    }
+
+    const comment = await Comment.exists({ _id: id });
+
+    if (!comment) {
+      return res.status(404).json({
+        message: "Comment not found",
+      });
+    }
+
+    const existingLike = await CommentLike.exists({
+      author: req.userId,
+      comment: id,
+    });
+
+    if (existingLike) {
+      return res.status(409).json({
+        message: "Comment already liked",
+      });
+    }
+
+    try {
+      await CommentLike.create({
+        author: req.userId,
+        comment: id,
+      });
+    } catch (error) {
+      if (error.code === 11000) {
+        return res.status(409).json({
+          message: "Comment already liked",
+        });
+      }
+      throw error;
+    }
+
+    const likesCount = await CommentLike.countDocuments({
+      comment: id,
+    });
+
+    return res.status(201).json({
+      message: "Comment successfully liked",
+      likesCount,
+      isLiked: true,
+    });
   } catch (error) {
     console.error(error);
     return res.status(500).json({
