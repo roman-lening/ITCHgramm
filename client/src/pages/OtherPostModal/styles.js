@@ -47,6 +47,7 @@ export const styles = {
     borderRadius: "0 3px 3px 0",
     paddingRight: "11px",
     background: "white",
+    paddingTop: "12px",
   },
 
   topSection: {
