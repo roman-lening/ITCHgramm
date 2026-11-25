@@ -21,6 +21,7 @@ import exploreDark from "../../assets/DrawerSvg/Dark/Explore.svg";
 import messageDark from "../../assets/DrawerSvg/Dark/Message.svg";
 import notificationDark from "../../assets/DrawerSvg/Dark/Notification.svg";
 import { searchUsers, clearSearch } from "../../redux/slices/searchSlice.js";
+import { getMyProfile } from "../../redux/slices/profileSlice.js";
 
 const searchInputStyles = {
   fontSize: "16px",
@@ -107,10 +108,22 @@ function Drawerr({ openSearch, setOpenSearch }) {
   const [openMessage, setOpenMessage] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [recentUsers, setRecentUsers] = useState([]);
+   
+  const profileUser = useSelector(
+  (state) => state.profile.myProfile?.user,
+);
+
+const username = profileUser?.username ?? "unknown";
+const avatarUrl = profileUser?.avatarUrl || itchgram;
+
+useEffect(() => {
+  dispatch(getMyProfile());
+}, [dispatch]);
 
   const isHome = location.pathname !== "/home";
   const isProfile = location.pathname !== "/profile";
   const isExplore = location.pathname !== "/explore";
+
 
   const trimmedQuery = searchQuery.trim();
 
@@ -298,8 +311,8 @@ function Drawerr({ openSearch, setOpenSearch }) {
         <NavLink to="/profile" onClick={closePanels} style={styles.item}>
           <Box
             component="img"
-            src={itchgram}
-            alt="itchgram"
+              src={avatarUrl}
+            alt={username}
             sx={styles.profileIcon}
           />
 
