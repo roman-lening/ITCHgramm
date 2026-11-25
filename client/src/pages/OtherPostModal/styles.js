@@ -66,6 +66,8 @@ export const styles = {
     gap: "7px",
     alignItems: "center",
     paddingLeft: "13px",
+    paddingTop: "7px",
+    paddingBottom: "7px",
   },
 
   iconButton: {
@@ -132,6 +134,7 @@ export const styles = {
     gap: "7px",
     justifyContent: "center",
     paddingLeft: "13px",
+    
   },
 
   descriptionBody: {
@@ -178,8 +181,7 @@ export const styles = {
     display: "flex",
     justifyContent: "flex-start",
     gap: "7px",
-    paddingTop: "7px",
-    paddingBottom: "7px",
+    
   },
 
   commentDetails: {
