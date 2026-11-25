@@ -188,9 +188,11 @@ function Post({ post, onOpenComments }) {
         <Box
           component="video"
           src={post.video}
-          controls
+          autoPlay
+          muted
           playsInline
-          preload="metadata"
+          controls
+          preload="auto"
           sx={styles.postImage}
         />
       ) : null}
