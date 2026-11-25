@@ -27,7 +27,6 @@ const formatPostTime = (date) => {
   if (!date) return "";
 
   const timestamp = new Date(date).getTime();
-
   if (Number.isNaN(timestamp)) return "";
 
   const difference = Math.max(0, Date.now() - timestamp);
@@ -48,7 +47,7 @@ const formatPostTime = (date) => {
   return `${Math.floor(days / 365)}y`;
 };
 
-function Post({ post }) {
+function Post({ post, onOpenComments }) {
   const dispatch = useDispatch();
 
   const [likeBusy, setLikeBusy] = useState(false);
@@ -91,6 +90,7 @@ function Post({ post }) {
     : `/profile/${encodeURIComponent(username)}`;
 
   const isLiked = likesInfo?.isLiked === true;
+
   const likesLoaded = typeof likesInfo?.isLiked === "boolean";
 
   const likesText =
@@ -210,7 +210,11 @@ function Post({ post }) {
             )}
           </IconButton>
 
-          <IconButton aria-label="Comment on post" sx={styles.iconButton}>
+          <IconButton
+            aria-label="Comment on post"
+            onClick={() => onOpenComments?.(postId)}
+            sx={styles.iconButton}
+          >
             <Box component="img" src={comment} alt="" sx={styles.actionIcon} />
           </IconButton>
         </Box>
