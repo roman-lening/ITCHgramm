@@ -71,36 +71,6 @@ function Home() {
     setSelectedPostId(null);
   };
 
-  useEffect(() => {
-    if (!selectedPost) return;
-
-    const handleOutsideClick = (event) => {
-      const isInsidePost =
-        event.target instanceof Element &&
-        event.target.closest("[data-post-modal-content]");
-
-      if (!isInsidePost) {
-        event.stopPropagation();
-        event.preventDefault();
-        setSelectedPostId(null);
-      }
-    };
-
-    document.addEventListener(
-      "click",
-      handleOutsideClick,
-      true,
-    );
-
-    return () => {
-      document.removeEventListener(
-        "click",
-        handleOutsideClick,
-        true,
-      );
-    };
-  }, [selectedPost]);
-
   const isLoading =
     (loading && posts.length === 0) ||
     (followingLoading && !followingLoaded);
@@ -149,6 +119,7 @@ function Home() {
           sx={{
             width: "100%",
             margin: "0 auto",
+            outline: "none",
           }}
         >
           {selectedPost &&
