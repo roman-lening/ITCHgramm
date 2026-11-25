@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { NavLink, useNavigate } from "react-router-dom";
 
@@ -7,13 +7,23 @@ import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
+import Popover from "@mui/material/Popover";
 
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import SentimentSatisfiedAltOutlinedIcon from "@mui/icons-material/SentimentSatisfiedAltOutlined";
 
+import EmojiPicker from "emoji-picker-react";
+
 import itchgram from "../../assets/itchgram.png";
 import like from "../../assets/DrawerSvg/Light/Notification.svg";
 import comment from "../../assets/Comment.svg";
+
+import {
+  getComments,
+  createComment,
+  likeComment,
+  unlikeComment,
+} from "../../redux/slices/commentsSlice.js";
 
 import EditPost from "../EditPost";
 
@@ -26,11 +36,13 @@ import {
 
 import { styles } from "./styles";
 
+const EMPTY_COMMENTS = [];
+const MAX_COMMENT_LENGTH = 500;
+
 const formatPostDate = (date) => {
   if (!date) return "";
 
   const postDate = new Date(date);
-
   if (Number.isNaN(postDate.getTime())) return "";
 
   return postDate.toLocaleDateString("en-US", {
@@ -45,6 +57,20 @@ function MyPostModal({ post, user: postAuthor, onClose }) {
   const navigate = useNavigate();
 
   const postId = post?._id;
+
+  const comments = useSelector(
+    (state) => state.comments.commentsByPost[postId] ?? EMPTY_COMMENTS,
+  );
+
+  const sendingComment = useSelector(
+    (state) => state.comments.sendingByPost[postId] ?? false,
+  );
+
+  const commentError = useSelector(
+    (state) => state.comments.errorsByPost[postId],
+  );
+
+  const pendingLikeIds = useSelector((state) => state.comments.pendingLikeIds);
 
   const profileUser = useSelector((state) => state.profile.myProfile?.user);
 
@@ -71,10 +97,25 @@ function MyPostModal({ post, user: postAuthor, onClose }) {
   const [likeBusy, setLikeBusy] = useState(false);
   const [likeError, setLikeError] = useState("");
 
+  const [emojiAnchor, setEmojiAnchor] = useState(null);
+
+  const inputRef = useRef(null);
+
+  const cursorRef = useRef({
+    start: 0,
+    end: 0,
+  });
+
   const [copyStatus, setCopyStatus] = useState({
     message: "",
     isError: false,
   });
+
+  useEffect(() => {
+    if (postId) {
+      dispatch(getComments(postId));
+    }
+  }, [dispatch, postId]);
 
   useEffect(() => {
     if (!postId) return;
@@ -83,8 +124,90 @@ function MyPostModal({ post, user: postAuthor, onClose }) {
   }, [dispatch, postId]);
 
   const isLiked = likesInfo?.isLiked === true;
-
   const likesLoaded = typeof likesInfo?.isLiked === "boolean";
+
+  const handleSendComment = async () => {
+    const text = commentar.trim();
+
+    if (
+      !postId ||
+      !text ||
+      text.length > MAX_COMMENT_LENGTH ||
+      sendingComment
+    ) {
+      return;
+    }
+
+    try {
+      await dispatch(
+        createComment({
+          postId,
+          text,
+        }),
+      ).unwrap();
+
+      setComment("");
+
+      cursorRef.current = {
+        start: 0,
+        end: 0,
+      };
+
+      setEmojiAnchor(null);
+    } catch (error) {
+      console.error("Failed to create comment:", error);
+    }
+  };
+
+  const handleCommentLike = (item) => {
+    if (!postId || pendingLikeIds.includes(item._id)) {
+      return;
+    }
+
+    const data = {
+      postId,
+      commentId: item._id,
+    };
+
+    if (item.isLiked) {
+      dispatch(unlikeComment(data));
+    } else {
+      dispatch(likeComment(data));
+    }
+  };
+
+  const handleEmojiClick = (emojiData) => {
+    const emoji = emojiData.emoji;
+
+    const { start, end } = cursorRef.current;
+
+    const positionStart = Math.min(start, commentar.length);
+
+    const positionEnd = Math.min(end, commentar.length);
+
+    const newText =
+      commentar.slice(0, positionStart) + emoji + commentar.slice(positionEnd);
+
+    if (newText.length > MAX_COMMENT_LENGTH) {
+      return;
+    }
+
+    setComment(newText);
+    setEmojiAnchor(null);
+
+    const newPosition = positionStart + emoji.length;
+
+    cursorRef.current = {
+      start: newPosition,
+      end: newPosition,
+    };
+
+    requestAnimationFrame(() => {
+      inputRef.current?.focus();
+
+      inputRef.current?.setSelectionRange(newPosition, newPosition);
+    });
+  };
 
   const handleLike = async () => {
     if (!postId || !likesLoaded || likeBusy) return;
@@ -283,50 +406,84 @@ function MyPostModal({ post, user: postAuthor, onClose }) {
             </Box>
 
             <Box sx={styles.commentsList}>
-              {Array.from({ length: 4 }, (_, index) => (
-                <Box key={index} sx={styles.commentRow}>
-                  <Box sx={styles.commentAuthorRow}>
-                    <IconButton
-                      aria-label="Comment on post"
-                      sx={styles.iconButton}
-                    >
-                      <Box
-                        component="img"
-                        src={itchgram}
-                        alt="itchgram"
-                        sx={styles.avatar}
-                      />
-                    </IconButton>
+              {comments.map((item) => {
+                const commentLikeBusy = pendingLikeIds.includes(item._id);
 
-                    <Box sx={styles.commentDetails}>
-                      <Box sx={styles.commentContentRow}>
-                        <Typography sx={styles.usernameLink}>
-                          username
-                        </Typography>
+                return (
+                  <Box key={item._id} sx={styles.commentRow}>
+                    <Box sx={styles.commentAuthorRow}>
+                      <IconButton
+                        aria-label="Comment author"
+                        sx={styles.iconButton}
+                      >
+                        <Box
+                          component="img"
+                          src={item.author?.avatarUrl || itchgram}
+                          alt={item.author?.username || "User"}
+                          sx={styles.avatar}
+                        />
+                      </IconButton>
 
-                        <Typography sx={styles.commentText}>
-                          спасибо!!!!
-                        </Typography>
-                      </Box>
+                      <Box sx={styles.commentDetails}>
+                        <Box sx={styles.commentContentRow}>
+                          <Typography sx={styles.usernameLink}>
+                            {item.author?.username || "unknown"}
+                          </Typography>
 
-                      <Box sx={styles.commentMetaRow}>
-                        <Typography sx={styles.metaText}>17 h.</Typography>
+                          <Typography
+                            sx={{
+                              ...styles.commentText,
+                              whiteSpace: "pre-wrap",
+                              overflowWrap: "anywhere",
+                            }}
+                          >
+                            {item.text}
+                          </Typography>
+                        </Box>
 
-                        <Typography sx={styles.metaText}>Likes: 1</Typography>
+                        <Box sx={styles.commentMetaRow}>
+                          <Typography sx={styles.metaText}>
+                            {item.createdAt
+                              ? new Date(item.createdAt).toLocaleDateString(
+                                  "en-US",
+                                )
+                              : ""}
+                          </Typography>
+
+                          <Typography sx={styles.metaText}>
+                            Likes: {item.likesCount ?? 0}
+                          </Typography>
+                        </Box>
                       </Box>
                     </Box>
-                  </Box>
 
-                  <IconButton aria-label="Like comment" sx={styles.iconButton}>
-                    <Box
-                      component="img"
-                      src={like}
-                      alt="like"
-                      sx={styles.commentLikeIcon}
-                    />
-                  </IconButton>
-                </Box>
-              ))}
+                    <IconButton
+                      aria-label={
+                        item.isLiked ? "Unlike comment" : "Like comment"
+                      }
+                      onClick={() => handleCommentLike(item)}
+                      disabled={commentLikeBusy}
+                      sx={styles.iconButton}
+                    >
+                      {item.isLiked ? (
+                        <FavoriteIcon
+                          sx={{
+                            ...styles.commentLikeIcon,
+                            color: "#ff3040",
+                          }}
+                        />
+                      ) : (
+                        <Box
+                          component="img"
+                          src={like}
+                          alt=""
+                          sx={styles.commentLikeIcon}
+                        />
+                      )}
+                    </IconButton>
+                  </Box>
+                );
+              })}
             </Box>
           </Box>
         </Box>
@@ -372,19 +529,59 @@ function MyPostModal({ post, user: postAuthor, onClose }) {
           </Box>
 
           <Box sx={styles.commentForm}>
-            <IconButton aria-label="Choose emoji" sx={styles.emojiButton}>
+            <IconButton
+              aria-label="Choose emoji"
+              onClick={(event) => setEmojiAnchor(event.currentTarget)}
+              sx={styles.emojiButton}
+            >
               <SentimentSatisfiedAltOutlinedIcon sx={styles.emojiIcon} />
             </IconButton>
 
             <TextField
+              inputRef={inputRef}
               placeholder="Add comment"
               value={commentar}
-              onChange={(event) => setComment(event.target.value)}
+              onChange={(event) => {
+                setComment(event.target.value);
+
+                cursorRef.current = {
+                  start:
+                    event.target.selectionStart ?? event.target.value.length,
+                  end: event.target.selectionEnd ?? event.target.value.length,
+                };
+              }}
+              onSelect={(event) => {
+                cursorRef.current = {
+                  start: event.target.selectionStart ?? commentar.length,
+                  end: event.target.selectionEnd ?? commentar.length,
+                };
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && !event.nativeEvent.isComposing) {
+                  event.preventDefault();
+                  handleSendComment();
+                }
+              }}
+              slotProps={{
+                htmlInput: {
+                  maxLength: MAX_COMMENT_LENGTH,
+                },
+              }}
               sx={styles.commentInput}
             />
 
-            <Button sx={styles.sendButton}>Send</Button>
+            <Button
+              onClick={handleSendComment}
+              disabled={!commentar.trim() || sendingComment}
+              sx={styles.sendButton}
+            >
+              {sendingComment ? "Sending..." : "Send"}
+            </Button>
           </Box>
+
+          {commentError && (
+            <Typography sx={styles.deleteError}>{commentError}</Typography>
+          )}
         </Box>
       </Box>
 
@@ -412,6 +609,34 @@ function MyPostModal({ post, user: postAuthor, onClose }) {
           </Box>
         </Box>
       )}
+
+      <Popover
+        open={Boolean(emojiAnchor)}
+        anchorEl={emojiAnchor}
+        onClose={() => setEmojiAnchor(null)}
+        anchorOrigin={{
+          vertical: "top",
+          horizontal: "right",
+        }}
+        transformOrigin={{
+          vertical: "bottom",
+          horizontal: "left",
+        }}
+        slotProps={{
+          paper: {
+            "data-post-modal-content": "",
+          },
+        }}
+      >
+        <EmojiPicker
+          width={300}
+          height={340}
+          onEmojiClick={handleEmojiClick}
+          previewConfig={{
+            showPreview: false,
+          }}
+        />
+      </Popover>
     </Box>
   );
 }
