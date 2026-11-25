@@ -132,7 +132,7 @@ export const styles = {
     paddingBottom: "7px",
     paddingTop: "7px",
     gap: "7px",
-    justifyContent: "center",
+    justifyContent: "flex-start",
     paddingLeft: "13px",
     
   },
