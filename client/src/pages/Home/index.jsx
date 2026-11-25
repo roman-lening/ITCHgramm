@@ -9,7 +9,9 @@ import Modal from "@mui/material/Modal";
 import Post from "../../components/Post";
 import EndPosts from "../../components/EndPosts";
 
-import MyPostModal from "../MyPostModal";import OtherPostModal from "../OtherPostModal";
+import MyPostModal from "../MyPostModal";
+import OtherPostModal from "../OtherPostModal";
+
 import { getPosts } from "../../redux/slices/postsSlice.js";
 import { getFollowing } from "../../redux/slices/followSlice.js";
 
@@ -69,6 +71,42 @@ function Home() {
     setSelectedPostId(null);
   };
 
+  useEffect(() => {
+    if (!selectedPostId) return;
+
+    const handleOutsideClick = (event) => {
+      if (!(event.target instanceof Element)) return;
+
+      const clickedInsidePost = event.target.closest(
+        "[data-post-modal-content]",
+      );
+
+      const clickedInsideEmojiPicker = event.target.closest(
+        ".MuiPopover-root",
+      );
+
+      if (clickedInsidePost || clickedInsideEmojiPicker) {
+        return;
+      }
+
+      setSelectedPostId(null);
+    };
+
+    document.addEventListener(
+      "click",
+      handleOutsideClick,
+      true,
+    );
+
+    return () => {
+      document.removeEventListener(
+        "click",
+        handleOutsideClick,
+        true,
+      );
+    };
+  }, [selectedPostId]);
+
   const isLoading =
     (loading && posts.length === 0) ||
     (followingLoading && !followingLoaded);
@@ -109,43 +147,32 @@ function Home() {
         )}
       </Box>
 
-      
-<Modal
-  open={Boolean(selectedPost)}
-  onClose={closePost}
->
-  <Box
-    sx={{
-      width: "100%",
-      margin: "0 auto",
-      outline: "none",
-    }}
-    onClick={(event) => {
-      const clickedInside =
-        event.target instanceof Element &&
-        event.target.closest("[data-post-modal-content]");
-
-      if (!clickedInside) {
-        closePost();
-      }
-    }}
-  >
-    {selectedPost &&
-      (isOwnPost ? (
-        <MyPostModal
-          post={selectedPost}
-          user={selectedPost.author}
-          onClose={closePost}
-        />
-      ) : (
-        <OtherPostModal
-          post={selectedPost}
-          user={selectedPost.author}
-        />
-      ))}
-  </Box>
-</Modal>
-
+      <Modal
+        open={Boolean(selectedPost)}
+        onClose={closePost}
+      >
+        <Box
+          sx={{
+            width: "100%",
+            margin: "0 auto",
+            outline: "none",
+          }}
+        >
+          {selectedPost &&
+            (isOwnPost ? (
+              <MyPostModal
+                post={selectedPost}
+                user={selectedPost.author}
+                onClose={closePost}
+              />
+            ) : (
+              <OtherPostModal
+                post={selectedPost}
+                user={selectedPost.author}
+              />
+            ))}
+        </Box>
+      </Modal>
     </>
   );
 }
