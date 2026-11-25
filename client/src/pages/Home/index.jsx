@@ -9,9 +9,7 @@ import Modal from "@mui/material/Modal";
 import Post from "../../components/Post";
 import EndPosts from "../../components/EndPosts";
 
-import MyPostModal from "../../components/MyPostModal";
-import OtherPostModal from "../../components/OtherPostModal";
-
+import MyPostModal from "../MyPostModal";import OtherPostModal from "../OtherPostModal";
 import { getPosts } from "../../redux/slices/postsSlice.js";
 import { getFollowing } from "../../redux/slices/followSlice.js";
 
