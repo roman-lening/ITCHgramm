@@ -109,32 +109,43 @@ function Home() {
         )}
       </Box>
 
-      <Modal
-        open={Boolean(selectedPost)}
-        onClose={closePost}
-      >
-        <Box
-          sx={{
-            width: "100%",
-            margin: "0 auto",
-            outline: "none",
-          }}
-        >
-          {selectedPost &&
-            (isOwnPost ? (
-              <MyPostModal
-                post={selectedPost}
-                user={selectedPost.author}
-                onClose={closePost}
-              />
-            ) : (
-              <OtherPostModal
-                post={selectedPost}
-                user={selectedPost.author}
-              />
-            ))}
-        </Box>
-      </Modal>
+      
+<Modal
+  open={Boolean(selectedPost)}
+  onClose={closePost}
+>
+  <Box
+    sx={{
+      width: "100%",
+      margin: "0 auto",
+      outline: "none",
+    }}
+    onClick={(event) => {
+      const clickedInside =
+        event.target instanceof Element &&
+        event.target.closest("[data-post-modal-content]");
+
+      if (!clickedInside) {
+        closePost();
+      }
+    }}
+  >
+    {selectedPost &&
+      (isOwnPost ? (
+        <MyPostModal
+          post={selectedPost}
+          user={selectedPost.author}
+          onClose={closePost}
+        />
+      ) : (
+        <OtherPostModal
+          post={selectedPost}
+          user={selectedPost.author}
+        />
+      ))}
+  </Box>
+</Modal>
+
     </>
   );
 }
