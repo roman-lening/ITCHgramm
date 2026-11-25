@@ -7,6 +7,7 @@ import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import itchgramm from "../../assets/itchgramm.png";
 import itchgram from "../../assets/itchgram.png";
 import { styles } from "./styles";
 import homeLight from "../../assets/DrawerSvg/Light/Home.svg";
@@ -231,7 +232,7 @@ useEffect(() => {
   return (
     <Box sx={styles.container}>
       <Drawer sx={styles.mainDrawer} variant="permanent" anchor="left">
-        <Box component="img" src={itchgram} alt="itchgram" sx={styles.logo} />
+        <Box component="img" src={itchgramm} alt="itchgram" sx={styles.logo} />
 
         <List>
           <NavLink to="/home" onClick={closePanels} style={styles.item}>
