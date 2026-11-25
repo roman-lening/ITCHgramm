@@ -77,6 +77,8 @@ export const styles = {
     height: "27px",
     border: "1px solid black",
     borderRadius: "50%",
+    paddingTop: "7px",
+    paddingBottom: "7px",
   },
 
   headerInfo: {

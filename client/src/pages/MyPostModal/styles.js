@@ -55,7 +55,7 @@ export const styles = {
     borderRadius: "0 3px 3px 0",
     paddingRight: "11px",
     background: "white",
-    paddingTop: "12px",
+
   },
 
   topSection: {
@@ -91,6 +91,8 @@ export const styles = {
     height: "27px",
     border: "1px solid black",
     borderRadius: "50%",
+    paddingTop: "7px",
+    paddingBottom: "7px",
   },
 
   headerInfo: {
