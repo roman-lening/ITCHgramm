@@ -14,7 +14,6 @@ export const styles = {
     paddingLeft: "123px",
     minHeight: 0,
     overflowY: "auto",
-    overscrollBehavior: "contain",
   },
 
   postImage: (index) => ({

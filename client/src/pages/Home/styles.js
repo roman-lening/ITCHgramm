@@ -16,6 +16,5 @@ export const styles = {
     height: "1320px",
     minHeight: 0,
     overflowY: "auto",
-    overscrollBehavior: "contain",
   },
 };

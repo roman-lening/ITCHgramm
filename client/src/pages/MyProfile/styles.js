@@ -151,7 +151,6 @@ export const styles = {
     minHeight: 0,
     overflowY: "auto",
     overflowX: "hidden",
-    overscrollBehavior: "contain",
   },
 
   postImage: {
