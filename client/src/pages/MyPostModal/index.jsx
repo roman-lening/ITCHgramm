@@ -152,7 +152,7 @@ function MyPostModal({ post, user: postAuthor, onClose }) {
         start: 0,
         end: 0,
       };
-
+      
       setEmojiAnchor(null);
     } catch (error) {
       console.error("Failed to create comment:", error);
