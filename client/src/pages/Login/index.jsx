@@ -6,7 +6,7 @@ import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
 import Divider from "@mui/material/Divider";
 import Button from "@mui/material/Button";
-import itchgram from "../../assets/itchgram.png";
+import itchgramm from "../../assets/itchgramm.png";
 import loginImage from "../../assets/loginImage.png";
 import { loginUser, clearAuthError } from "../../redux/slices/authSlice";
 import { styles } from "./styles";
@@ -74,7 +74,7 @@ function Login() {
 
       <Box sx={styles.rightContainer}>
         <Box sx={styles.loginCard}>
-          <Box component="img" src={itchgram} alt="itchgram" sx={styles.logo} />
+          <Box component="img" src={itchgramm} alt="itchgram" sx={styles.logo} />
 
           <Box
             component="form"
