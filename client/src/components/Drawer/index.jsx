@@ -23,6 +23,7 @@ import messageDark from "../../assets/DrawerSvg/Dark/Message.svg";
 import notificationDark from "../../assets/DrawerSvg/Dark/Notification.svg";
 import { searchUsers, clearSearch } from "../../redux/slices/searchSlice.js";
 import { getMyProfile } from "../../redux/slices/profileSlice.js";
+import { optimizeCloudinaryImage } from "../../utils/cloudinaryImage.js";
 
 const searchInputStyles = {
   fontSize: "16px",
@@ -208,7 +209,7 @@ useEffect(() => {
     >
       <Box
         component="img"
-        src={user.avatarUrl || itchgram}
+        src={optimizeCloudinaryImage(user.avatarUrl || itchgram, 96)}
         alt={user.username}
         sx={resultAvatarStyles}
       />
@@ -312,7 +313,7 @@ useEffect(() => {
         <NavLink to="/profile" onClick={closePanels} style={styles.item}>
           <Box
             component="img"
-              src={avatarUrl}
+            src={optimizeCloudinaryImage(avatarUrl, 96)}
             alt={username}
             sx={styles.profileIcon}
           />

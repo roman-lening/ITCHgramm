@@ -14,6 +14,7 @@ import {
   followUser,
   unfollowUser,
 } from "../../redux/slices/followSlice.js";
+import { optimizeCloudinaryImage } from "../../utils/cloudinaryImage.js";
 import { styles } from "./styles";
 
 function OtherProfile() {
@@ -177,7 +178,7 @@ function OtherProfile() {
       <Box sx={styles.header}>
         <Box
           component="img"
-          src={user.avatarUrl || itchgram}
+          src={optimizeCloudinaryImage(user.avatarUrl || itchgram, 320)}
           alt={user.username}
           sx={styles.avatar}
         />
@@ -258,7 +259,7 @@ function OtherProfile() {
             <Box
               key={post._id}
               component="img"
-              src={post.image}
+              src={optimizeCloudinaryImage(post.image, 640)}
               alt={post.description || "Post"}
               onClick={() => setSelectedPost(post)}
               sx={styles.postImage}

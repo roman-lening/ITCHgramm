@@ -17,6 +17,7 @@ import AddImg from "../../assets/addPostFoto.svg";
 
 import { createPost } from "../../redux/slices/postsSlice.js";
 import { getMyProfile } from "../../redux/slices/profileSlice.js";
+import { optimizeCloudinaryImage } from "../../utils/cloudinaryImage.js";
 
 import { styles } from "./styles";
 
@@ -311,7 +312,7 @@ function AddPost() {
             <Box sx={styles.userRow}>
               <Box
                 component="img"
-                src={profileUser?.avatarUrl || itchgram}
+                src={optimizeCloudinaryImage(profileUser?.avatarUrl || itchgram, 96)}
                 alt={profileUser?.username || "User"}
                 sx={styles.avatar}
               />

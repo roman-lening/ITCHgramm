@@ -36,6 +36,7 @@ import {
   likeComment,
   unlikeComment,
 } from "../../redux/slices/commentsSlice.js";
+import { optimizeCloudinaryImage } from "../../utils/cloudinaryImage.js";
 
 import { styles } from "./styles";
 
@@ -277,7 +278,7 @@ function OtherPostModal({ post, user }) {
       {currentPost.image ? (
         <Box
           component="img"
-          src={currentPost.image}
+          src={optimizeCloudinaryImage(currentPost.image, 1600)}
           alt={currentPost.description || "Post"}
           sx={styles.postImage}
           data-post-modal-content
@@ -300,7 +301,7 @@ function OtherPostModal({ post, user }) {
             <IconButton aria-label="User profile" sx={styles.iconButton}>
               <Box
                 component="img"
-                src={avatarUrl}
+                src={optimizeCloudinaryImage(avatarUrl, 96)}
                 alt={username}
                 sx={styles.avatar}
               />
@@ -336,7 +337,7 @@ function OtherPostModal({ post, user }) {
               <IconButton aria-label="User profile" sx={styles.iconButton}>
                 <Box
                   component="img"
-                  src={avatarUrl}
+                  src={optimizeCloudinaryImage(avatarUrl, 96)}
                   alt={username}
                   sx={styles.avatar}
                 />
@@ -378,7 +379,10 @@ function OtherPostModal({ post, user }) {
                       >
                         <Box
                           component="img"
-                          src={item.author?.avatarUrl || itchgram}
+                          src={optimizeCloudinaryImage(
+                            item.author?.avatarUrl || itchgram,
+                            96,
+                          )}
                           alt={item.author?.username || "User"}
                           sx={styles.avatar}
                         />

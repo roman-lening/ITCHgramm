@@ -20,6 +20,7 @@ import {
 } from "../../redux/slices/postsSlice.js";
 
 import { followUser, unfollowUser } from "../../redux/slices/followSlice.js";
+import { optimizeCloudinaryImage } from "../../utils/cloudinaryImage.js";
 
 import { styles } from "./styles";
 
@@ -148,7 +149,7 @@ function Post({ post, onOpenComments }) {
         <NavLink to={profileLink} style={styles.profileLink}>
           <Box
             component="img"
-            src={avatarUrl}
+            src={optimizeCloudinaryImage(avatarUrl, 96)}
             alt={username}
             sx={styles.avatar}
           />
@@ -180,7 +181,7 @@ function Post({ post, onOpenComments }) {
       {post.image ? (
         <Box
           component="img"
-          src={post.image}
+          src={optimizeCloudinaryImage(post.image, 1200)}
           alt={post.description || "Post"}
           sx={styles.postImage}
         />

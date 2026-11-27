@@ -12,6 +12,7 @@ import {
   getMyProfile,
   updateMyProfile,
 } from "../../redux/slices/profileSlice.js";
+import { optimizeCloudinaryImage } from "../../utils/cloudinaryImage.js";
 import { styles } from "./styles";
 
 function EditProfileForm({ user }) {
@@ -141,7 +142,7 @@ function EditProfileForm({ user }) {
         <Box sx={styles.profileInfo}>
           <Box
             component="img"
-            src={avatarPreview || user.avatarUrl || itchgram}
+            src={optimizeCloudinaryImage(avatarPreview || user.avatarUrl || itchgram, 96)}
             alt="Profile avatar"
             sx={styles.avatar}
           />

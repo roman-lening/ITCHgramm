@@ -10,6 +10,7 @@ import OtherPostModal from "../OtherPostModal/index.jsx";
 import MyPostModal from "../MyPostModal/index.jsx";
 
 import { getPosts } from "../../redux/slices/postsSlice.js";
+import { optimizeCloudinaryImage } from "../../utils/cloudinaryImage.js";
 import { styles } from "./styles";
 
 function Explore() {
@@ -88,7 +89,7 @@ function Explore() {
               <Box
                 key={post._id}
                 component="img"
-                src={post.image}
+                src={optimizeCloudinaryImage(post.image, 640)}
                 alt={post.description || "Post"}
                 onClick={() => openPost(post._id)}
                 sx={styles.postImage(index)}
