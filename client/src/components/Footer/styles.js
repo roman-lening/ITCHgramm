@@ -11,7 +11,6 @@ export const styles = {
   paddingTop: "24px",
   paddingBottom: "clamp(32px, 4.24vw, 61px)",
   position: "relative",
-  zIndex: 1500,
   backgroundColor: "#fff",
 },
 
